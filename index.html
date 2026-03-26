@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Application Portal - Prowise Advisory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="application-page">
+     
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Prowise Advisory Logo">
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div id="formOpenState">
+        <div class="form-container">
+            <div class="form-header">
+                <h1>Candidate Application Form</h1>
+                <p>Join our team at Prowise Advisory Private Limited</p>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress">
+                    <div class="progress-steps">
+                        <div class="progress-step" style="--step: 0"></div>
+                    </div>
+                    <div class="step-dots">
+                        <div class="step-dot active" data-step="0"></div>
+                        <div class="step-dot" data-step="1"></div>
+                        <div class="step-dot" data-step="2"></div>
+                        <div class="step-dot" data-step="3"></div>
+                        <div class="step-dot" data-step="4"></div>
+                        <div class="step-dot" data-step="5"></div>
+                        <div class="step-dot" data-step="6"></div>
+                        <div class="step-dot" data-step="7"></div>
+                    </div>
+                </div>
+                <div class="step-labels">
+                    <div class="step-label">Position</div>
+                    <div class="step-label">Personal</div>
+                    <div class="step-label">Education</div>
+                    <div class="step-label">Experience</div>
+                    <div class="step-label">Current</div>
+                    <div class="step-label">Skills</div>
+                    <div class="step-label">References</div>
+                    <div class="step-label">Declaration</div>
+                </div>
+            </div>
+
+            <form id="applicationForm">
+                <!-- Step 1: Position Details -->
+                <div class="form-step active">
+                    <h2 class="step-title">Position Details</h2>
+                    <div class="form-group">
+                        <label for="position">Position Applied For</label>
+                        <input type="text" id="position">
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <select id="department">
+                            <option value="">Select Department</option>
+                            <option value="audit">Audit</option>
+                            <option value="accounts">Accounts</option>
+                            <option value="it">IT</option>
+                            <option value="hr">HR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="joiningDate">Preferred Joining Date</label>
+                        <input type="date" id="joiningDate">
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Personal Details -->
+                <div class="form-step">
+                    <h2 class="step-title">Personal Information</h2>
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName">
+                    </div>
+                    <div class="form-group">
+                        <label for="dob">Date of Birth</label>
+                        <input type="date" id="dob">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender">
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maritalStatus">Marital Status</label>
+                        <select id="maritalStatus">
+                            <option value="">Select Status</option>
+                            <option value="single">Single</option>
+                            <option value="married">Married</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="nationality">Nationality</label>
+                        <input type="text" id="nationality">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Current Address</label>
+                        <textarea id="address" rows="3"></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+                        <button type="button" class="btn" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Education -->
+                <div class="form-step">
+                    <h2 class="step-title">Educational Qualifications</h2>
+                    <div class="form-group">
+                        <label for="certification">Key Certification</label>
+                        <select id="certification">
+                            <option value="">Select Certification</option>
+                            <option value="sap">SAP</option>
+                            <option value="tally">TALLY</option>
+                            <option value="data-analyst">Data Analyst</option>
+                            <option value="gst">GST</option>
+                            <option value="others">Others</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Qualification</th>
+                                    <th>Institute</th>
+                                    <th>University</th>
+                                    <th>Year</th>
+                                    <th>CGPA/%</th>
+                                    <th>Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-label="Qualification">10th</td>
+                                    <td data-label="Institute"><input type="text"></td>
+                                    <td data-label="University"><input type="text"></td>
+                                    <td data-label="Year"><input type="text"></td>
+                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Mode"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Qualification">12th</td>
+                                    <td data-label="Institute"><input type="text"></td>
+                                    <td data-label="University"><input type="text"></td>
+                                    <td data-label="Year"><input type="text"></td>
+                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Mode"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Qualification">Graduation</td>
+                                    <td data-label="Institute"><input type="text"></td>
+                                    <td data-label="University"><input type="text"></td>
+                                    <td data-label="Year"><input type="text"></td>
+                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Mode"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Qualification">Post Graduation</td>
+                                    <td data-label="Institute"><input type="text"></td>
+                                    <td data-label="University"><input type="text"></td>
+                                    <td data-label="Year"><input type="text"></td>
+                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Mode"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Qualification">Professional (CA/CMA/MBA/etc.)</td>
+                                    <td data-label="Institute"><input type="text"></td>
+                                    <td data-label="University"><input type="text"></td>
+                                    <td data-label="Year"><input type="text"></td>
+                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Mode"><input type="text"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+                        <button type="button" class="btn" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Employment History -->
+                <div class="form-step wide-step">
+                    <div class="table-container">
+                        <h2 class="step-title">Employment History</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company Name</th>
+                                    <th>Industry</th>
+                                    <th>Designation</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>CTC</th>
+                                    <th>ReasonForLeaving</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-label="Company Name"><input type="text"></td>
+                                    <td data-label="Industry"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="From"><input type="text"></td>
+                                    <td data-label="To"><input type="text"></td>
+                                    <td data-label="CTC"><input type="text"></td>
+                                    <td data-label="Reason For Leaving"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Company Name"><input type="text"></td>
+                                    <td data-label="Industry"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="From"><input type="text"></td>
+                                    <td data-label="To"><input type="text"></td>
+                                    <td data-label="CTC"><input type="text"></td>
+                                    <td data-label="Reason For Leaving"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Company Name"><input type="text"></td>
+                                    <td data-label="Industry"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="From"><input type="text"></td>
+                                    <td data-label="To"><input type="text"></td>
+                                    <td data-label="CTC"><input type="text"></td>
+                                    <td data-label="Reason For Leaving"><input type="text"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+                        <button type="button" class="btn" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Current Employment -->
+
+                <div class="form-step">
+                    <h2 class="step-title">Current Employment Details</h2>
+                    <div class="form-group">
+                        <label for="currentOrg">Current Organization</label>
+                        <input type="text" id="currentOrg">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentDesignation">Current Designation</label>
+                        <input type="text" id="currentDesignation">
+                    </div>
+                    <div class="form-group">
+                        <label for="reportingTo">Reporting To</label>
+                        <input type="text" id="reportingTo">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentCTC">Current CTC (Fixed + Variable)</label>
+                        <input type="text" id="currentCTC">
+                    </div>
+                    <div class="form-group">
+                        <label for="noticePeriod">Notice Period</label>
+                        <input type="text" id="noticePeriod">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastWorkingDay">Last Working Day (If Resigned)</label>
+                        <input type="date" id="lastWorkingDay">
+                    </div>
+                    <div class="form-group">
+                        <label for="expectedCTC">Expected CTC</label>
+                        <input type="text" id="expectedCTC">
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+                        <button type="button" class="btn" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 6: Role & Functional Exposure -->
+                <div class="form-step">
+                    <h2 class="step-title">Role & Functional Exposure</h2>
+                    <p style="margin-bottom: 1.5rem; color: #64748b;">Please select areas you have hands-on experience
+                        in:</p>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="internalAudit"><span>Internal Audit</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="statutoryAudit"><span>Statutory Audit</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="ifcSox"><span>IFC/SOX</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="gst"><span> GST Compliances</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="tds"><span>TDS Compliances</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="finalization"><span>Finalization of Accounts</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="budgeting"><span>Budgeting</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="mis"><span>MIS Reporting</span>
+                        </label>
+                    </div><br>
+
+                    <div class="form-group">
+                        <label for="excelLevel">MS Excel Proficiency Level</label>
+                        <select id="excelLevel">
+                            <option value="">Select Level</option>
+                            <option value="basic">Basic</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+                        <button type="button" class="btn" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 7: References -->
+                <div class="form-step">
+                    <h2 class="step-title">Background & Professional References</h2>
+                    <p style="margin-bottom: 1.5rem; color: #64748b;">Provide at least 2 professional references:</p>
+                    <div class="form-group">
+                        <label for="backgroundVerification">Willing for Background Verification?</label>
+                        <select id="backgroundVerification">
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Organization</th>
+                                    <th>Designation</th>
+                                    <th>Contact</th>
+                                    <th>Relationship</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-label="Name"><input type="text"></td>
+                                    <td data-label="Organization"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="Contact"><input type="text"></td>
+                                    <td data-label="Relationship"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Name"><input type="text"></td>
+                                    <td data-label="Organization"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="Contact"><input type="text"></td>
+                                    <td data-label="Relationship"><input type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td data-label="Name"><input type="text"></td>
+                                    <td data-label="Organization"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="Contact"><input type="text"></td>
+                                    <td data-label="Relationship"><input type="text"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+                        <button type="button" class="btn" onclick="nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 8: Declaration -->
+                <div class="form-step">
+    <h2 class="step-title">Review & Declaration</h2>
+
+    <div class="declaration">
+        <label class="declaration-label">
+            <input type="checkbox" id="declaration" required>
+            <span>
+                I hereby declare that all information provided in this application is true and correct
+                to the best of my knowledge. I understand that any misrepresentation or concealment of
+                facts may lead to withdrawal of offer or termination of employment.
+            </span>
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label for="formDate">Date</label>
+        <input type="date" id="formDate">
+    </div>
+
+    <div class="button-group">
+        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+        <button type="button" class="btn" id="submitBtn" onclick="submitForm()">Submit Application</button>
+    </div>
+</div>
+            </form>
+        </div>
+        </div>
+
+        <div class="form-closed-panel" id="formClosedState" hidden>
+            <div class="form-closed-badge">Applications Closed</div>
+            <h2>This form is closed</h2>
+            <p>The candidate application form is currently unavailable. Please check back later or contact the admin team for updates.</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Prowise Advisory Private Limited | Careers Portal | <a href="#" style="color: #60a5fa;">Privacy
+                Policy</a></p>
+    </footer>
+<script src="js/script.js" defer></script>
+</body>
+
+</html>
