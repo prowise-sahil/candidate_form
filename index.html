@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body class="application-page">
-     
+<body>
+
     <header>
         <div class="header-container">
             <div class="logo">
@@ -146,57 +146,100 @@
                             <option value="others">Others</option>
                         </select>
                     </div>
+<!-- 10th Standard -->
+                    <h3 class="edu-section-heading">10th Standard</h3>
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Qualification</th>
                                     <th>Institute</th>
-                                    <th>University</th>
-                                    <th>Year</th>
-                                    <th>CGPA/%</th>
+                                    <th>Board/University</th>
+                                    <th>Year of Passing</th>
+                                    <th>CGPA / %</th>
                                     <th>Mode</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td data-label="Qualification">10th</td>
                                     <td data-label="Institute"><input type="text"></td>
-                                    <td data-label="University"><input type="text"></td>
-                                    <td data-label="Year"><input type="text"></td>
-                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Board/University"><input type="text"></td>
+                                    <td data-label="Year of Passing"><input type="text"></td>
+                                    <td data-label="CGPA / %"><input type="text"></td>
                                     <td data-label="Mode"><input type="text"></td>
                                 </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 12th Standard -->
+                    <h3 class="edu-section-heading">12th Standard</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td data-label="Qualification">12th</td>
+                                    <th>Institute</th>
+                                    <th>Board/University</th>
+                                    <th>Year of Passing</th>
+                                    <th>CGPA / %</th>
+                                    <th>Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
                                     <td data-label="Institute"><input type="text"></td>
-                                    <td data-label="University"><input type="text"></td>
-                                    <td data-label="Year"><input type="text"></td>
-                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Board/University"><input type="text"></td>
+                                    <td data-label="Year of Passing"><input type="text"></td>
+                                    <td data-label="CGPA / %"><input type="text"></td>
                                     <td data-label="Mode"><input type="text"></td>
                                 </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Graduation -->
+                    <h3 class="edu-section-heading">Graduation</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td data-label="Qualification">Graduation</td>
+                                    <th>Institute</th>
+                                    <th>University</th>
+                                    <th>Year of Passing</th>
+                                    <th>CGPA / %</th>
+                                    <th>Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
                                     <td data-label="Institute"><input type="text"></td>
                                     <td data-label="University"><input type="text"></td>
-                                    <td data-label="Year"><input type="text"></td>
-                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Year of Passing"><input type="text"></td>
+                                    <td data-label="CGPA / %"><input type="text"></td>
                                     <td data-label="Mode"><input type="text"></td>
                                 </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Post Graduation -->
+                    <h3 class="edu-section-heading">Post Graduation</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td data-label="Qualification">Post Graduation</td>
-                                    <td data-label="Institute"><input type="text"></td>
-                                    <td data-label="University"><input type="text"></td>
-                                    <td data-label="Year"><input type="text"></td>
-                                    <td data-label="CGPA/%"><input type="text"></td>
-                                    <td data-label="Mode"><input type="text"></td>
+                                    <th>Institute</th>
+                                    <th>University</th>
+                                    <th>Year of Passing</th>
+                                    <th>CGPA / %</th>
+                                    <th>Mode</th>
                                 </tr>
+                            </thead>
+                            <tbody>
                                 <tr>
-                                    <td data-label="Qualification">Professional (CA/CMA/MBA/etc.)</td>
                                     <td data-label="Institute"><input type="text"></td>
                                     <td data-label="University"><input type="text"></td>
-                                    <td data-label="Year"><input type="text"></td>
-                                    <td data-label="CGPA/%"><input type="text"></td>
+                                    <td data-label="Year of Passing"><input type="text"></td>
+                                    <td data-label="CGPA / %"><input type="text"></td>
                                     <td data-label="Mode"><input type="text"></td>
                                 </tr>
                             </tbody>
@@ -209,9 +252,13 @@
                 </div>
 
                 <!-- Step 4: Employment History -->
+                <!-- Step 4: Employment History -->
                 <div class="form-step wide-step">
+                    <h2 class="step-title">Employment History</h2>
+
+                    <!-- Employment 1 -->
+                    <h3 class="emp-section-heading">Company 1 </h3>
                     <div class="table-container">
-                        <h2 class="step-title">Employment History</h2>
                         <table>
                             <thead>
                                 <tr>
@@ -221,28 +268,10 @@
                                     <th>From</th>
                                     <th>To</th>
                                     <th>CTC</th>
-                                    <th>ReasonForLeaving</th>
+                                    <th>Reason For Leaving</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td data-label="Company Name"><input type="text"></td>
-                                    <td data-label="Industry"><input type="text"></td>
-                                    <td data-label="Designation"><input type="text"></td>
-                                    <td data-label="From"><input type="text"></td>
-                                    <td data-label="To"><input type="text"></td>
-                                    <td data-label="CTC"><input type="text"></td>
-                                    <td data-label="Reason For Leaving"><input type="text"></td>
-                                </tr>
-                                <tr>
-                                    <td data-label="Company Name"><input type="text"></td>
-                                    <td data-label="Industry"><input type="text"></td>
-                                    <td data-label="Designation"><input type="text"></td>
-                                    <td data-label="From"><input type="text"></td>
-                                    <td data-label="To"><input type="text"></td>
-                                    <td data-label="CTC"><input type="text"></td>
-                                    <td data-label="Reason For Leaving"><input type="text"></td>
-                                </tr>
                                 <tr>
                                     <td data-label="Company Name"><input type="text"></td>
                                     <td data-label="Industry"><input type="text"></td>
@@ -256,6 +285,65 @@
                         </table>
                     </div>
 
+                    <!-- Employment 2 -->
+                    <h3 class="emp-section-heading">Company 2</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company Name</th>
+                                    <th>Industry</th>
+                                    <th>Designation</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>CTC</th>
+                                    <th>Reason For Leaving</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-label="Company Name"><input type="text"></td>
+                                    <td data-label="Industry"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="From"><input type="text"></td>
+                                    <td data-label="To"><input type="text"></td>
+                                    <td data-label="CTC"><input type="text"></td>
+                                    <td data-label="Reason For Leaving"><input type="text"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Employment 3 -->
+                    <h3 class="emp-section-heading">Company3</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company Name</th>
+                                    <th>Industry</th>
+                                    <th>Designation</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>CTC</th>
+                                    <th>Reason For Leaving</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-label="Company Name"><input type="text"></td>
+                                    <td data-label="Industry"><input type="text"></td>
+                                    <td data-label="Designation"><input type="text"></td>
+                                    <td data-label="From"><input type="text"></td>
+                                    <td data-label="To"><input type="text"></td>
+                                    <td data-label="CTC"><input type="text"></td>
+                                    <td data-label="Reason For Leaving"><input type="text"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+
                     <div class="button-group">
                         <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
                         <button type="button" class="btn" onclick="nextStep()">Next</button>
@@ -263,7 +351,6 @@
                 </div>
 
                 <!-- Step 5: Current Employment -->
-
                 <div class="form-step">
                     <h2 class="step-title">Current Employment Details</h2>
                     <div class="form-group">
@@ -303,8 +390,7 @@
                 <!-- Step 6: Role & Functional Exposure -->
                 <div class="form-step">
                     <h2 class="step-title">Role & Functional Exposure</h2>
-                    <p style="margin-bottom: 1.5rem; color: #64748b;">Please select areas you have hands-on experience
-                        in:</p>
+                    <p style="margin-bottom: 1.5rem; color: #64748b;">Please select areas you have hands-on experience in:</p>
                     <div class="checkbox-group">
                         <label class="checkbox-item">
                             <input type="checkbox" id="internalAudit"><span>Internal Audit</span>
@@ -360,6 +446,7 @@
                         </select>
                     </div>
                     <div class="table-container">
+                        <h3 class="emp-section-heading">Detail Section 1</h3>
                         <table>
                             <thead>
                                 <tr>
@@ -378,13 +465,20 @@
                                     <td data-label="Contact"><input type="text"></td>
                                     <td data-label="Relationship"><input type="text"></td>
                                 </tr>
+                                </tbody>
+                                </table><br>
+                        <h3 class="emp-section-heading">Detail Section 2</h3>
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td data-label="Name"><input type="text"></td>
-                                    <td data-label="Organization"><input type="text"></td>
-                                    <td data-label="Designation"><input type="text"></td>
-                                    <td data-label="Contact"><input type="text"></td>
-                                    <td data-label="Relationship"><input type="text"></td>
+                                    <th>Name</th>
+                                    <th>Organization</th>
+                                    <th>Designation</th>
+                                    <th>Contact</th>
+                                    <th>Relationship</th>
                                 </tr>
+                            </thead>
+                            <tbody>
                                 <tr>
                                     <td data-label="Name"><input type="text"></td>
                                     <td data-label="Organization"><input type="text"></td>
@@ -395,7 +489,6 @@
                             </tbody>
                         </table>
                     </div>
-
                     <div class="button-group">
                         <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
                         <button type="button" class="btn" onclick="nextStep()">Next</button>
@@ -404,29 +497,30 @@
 
                 <!-- Step 8: Declaration -->
                 <div class="form-step">
-    <h2 class="step-title">Review & Declaration</h2>
+                    <h2 class="step-title">Review & Declaration</h2>
 
-    <div class="declaration">
-        <label class="declaration-label">
-            <input type="checkbox" id="declaration" required>
-            <span>
-                I hereby declare that all information provided in this application is true and correct
-                to the best of my knowledge. I understand that any misrepresentation or concealment of
-                facts may lead to withdrawal of offer or termination of employment.
-            </span>
-        </label>
-    </div>
+                    <div class="declaration">
+                        <label class="declaration-label">
+                            <input style="margin-top: 10px;"  type="checkbox" id="declaration" required>
+                            <span>
+                                I hereby declare that all information provided in this application is true and correct
+                                to the best of my knowledge. I understand that any misrepresentation or concealment of
+                                facts may lead to withdrawal of offer or termination of employment.
+                            </span>
+                        </label>
+                    </div>
+                    <br>
 
-    <div class="form-group">
-        <label for="formDate">Date</label>
-        <input type="date" id="formDate">
-    </div>
+                    <div class="form-group">
+                        <label for="formDate">Date</label>
+                        <input type="date" id="formDate">
+                    </div>
 
-    <div class="button-group">
-        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
-        <button type="button" class="btn" id="submitBtn" onclick="submitForm()">Submit Application</button>
-    </div>
-</div>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep()">Previous</button>
+                        <button type="button" class="btn" id="submitBtn" onclick="submitForm()">Submit Application</button>
+                    </div>
+                </div>
             </form>
         </div>
         </div>
@@ -439,10 +533,8 @@
     </main>
 
     <footer>
-        <p>&copy; 2026 Prowise Advisory Private Limited | Careers Portal | <a href="#" style="color: #60a5fa;">Privacy
-                Policy</a></p>
+        <p>&copy; 2026 Prowise Advisory Private Limited | Careers Portal | <a href="#" style="color: #60a5fa;">Privacy Policy</a></p>
     </footer>
-<script src="js/script.js" defer></script>
+<script src="js/script.js"></script>
 </body>
-
 </html>
