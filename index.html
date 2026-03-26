@@ -57,7 +57,26 @@
 
                 <form id="applicationForm">
                     <!-- Step 1: Position Details -->
+        
+
                     <div class="form-step active">
+                        <!-- Fresher Question -->
+                    <div class="fresher-question">
+                        <p>Are you a Fresher?</p>
+                        <div class="fresher-options">
+                            <label>
+                                <input type="radio" name="isFresher" value="yes" onclick="handleFresherChange(true)">
+                                <span>Yes, I am a Fresher</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="isFresher" value="no" onclick="handleFresherChange(false)"
+                                    checked>
+                                <span>No, I have Work Experience</span>
+                            </label>
+                        </div>
+                        <p class="fresher-note" id="fresherNote">Employment History and Current Employment sections will
+                            be skipped.</p>
+                    </div>
                         <h2 class="step-title">Position Details</h2>
                         <div class="form-group">
                             <label for="position">Position Applied For</label>
