@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prowise Admin Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: linear-gradient(135deg, #d4d5d5 0%, #d4dae0 50%, #dce6f6 100%);
+            /* For Background Color */
+            padding: 20px 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(59, 130, 246, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(234, 179, 8, 0.05) 0%, transparent 40%);
+            animation: bgFloat 18s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes bgFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(-15px, -10px);
+            }
+        }
+
+        .login-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            background: #1b7178;
+            border-radius: 20px;
+            /* TO Change The Color of Inner Card */
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+            padding: 2.5rem 2.25rem 2rem;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-top: -40px;
+        }
+
+        .logo-img {
+            width: 190px;
+            height: 150px;
+            object-fit: contain;
+            margin: 0 auto 0.75rem;
+            display: block;
+        }
+
+        .brand {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #1a365d;
+            letter-spacing: -0.5px;
+            margin-top: -10px;
+        }
+
+        .brand-accent {
+            color: #d97706;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #334155;
+            letter-spacing: 0.01em;
+        }
+
+        .input-wrap {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+            height: 42px;
+        }
+
+        .input-wrap:focus-within {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+        }
+
+        .input-wrap.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .input-wrap.error:focus-within {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+        }
+
+        .input-icon {
+            margin-left: 14px;
+            color: #94a3b8;
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+        }
+
+        .input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: #1e293b;
+            outline: none;
+            font-family: inherit;
+            padding: 10px 8px;
+            /* equal spacing */
+            font-size: 14px;
+        }
+
+        .input::placeholder {
+            color: #94a3b8;
+        }
+
+        .toggle-pw {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-pw:hover {
+            color: #475569;
+        }
+
+        .error-msg {
+            font-size: 0.8rem;
+            color: #ef4444;
+            margin: 2px 0 0 2px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .error-msg.show {
+            display: block;
+        }
+
+        .forgot-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: -0.5rem;
+        }
+
+        .forgot-link {
+            font-size: 0.8125rem;
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .forgot-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, #1a365d 0%, #2d4a7a 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            margin-top: 0.25rem;
+        }
+
+        .login-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0f2440 0%, #1a365d 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(26, 54, 93, 0.35);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        .btn-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 12;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .footer p {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 480px) {
+
+            .login-card {
+                padding: 1.5rem 1.2rem;
+            }
+
+            .form {
+                gap: 0.9rem;
+            }
+
+            .input-wrap {
+                height: 40px;
+            }
+
+            .input {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <div class="logo-section">
+            <img src="/assets/logo.png" alt="Prowise Consultancy Services" class="logo-img" />
+            <h1 class="brand">Admin<span class="brand-accent"> Panel</span></h1><br />
+        </div>
+
+        <form class="form" id="loginForm" novalidate>
+            <div class="field">
+                <label class="label" for="email">Email Address</label>
+                <div class="input-wrap" id="emailWrap">
+                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    <input class="input" type="email" id="email" placeholder="admin@prowise.com" autocomplete="email" />
+                </div>
+                <p class="error-msg" id="emailError"></p>
+            </div>
+
+            <div class="field">
+                <label class="label" for="password">Password</label>
+                <div class="input-wrap" id="passwordWrap">
+                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    <input class="input" type="password" id="password" placeholder="Enter your password"
+                        autocomplete="current-password" />
+                    <button type="button" class="toggle-pw" onclick="togglePassword()"
+                        aria-label="Toggle password visibility" id="toggleBtn">
+                        <svg id="eyeIcon" width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </button>
+                </div>
+                <p class="error-msg" id="passwordError"></p>
+            </div>
+
+            <div class="forgot-row">
+                <a href="#" class="forgot-link">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="login-btn" id="submitBtn">Sign In</button>
+        </form>
+
+        <div class="footer">
+            <p>&copy; 2026 Prowise Consultancy Services</p>
+        </div>
+    </div>
+
+    <script>
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const emailWrap = document.getElementById('emailWrap');
+        const passwordWrap = document.getElementById('passwordWrap');
+        const emailError = document.getElementById('emailError');
+        const passwordError = document.getElementById('passwordError');
+        const form = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        let emailTouched = false, passwordTouched = false;
+
+        function validateEmail(val) {
+            val = val.trim();
+
+            if (!val) return 'Email is required';
+
+            // basic format check
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(val)) {
+                return 'Please enter a valid email address';
+            }
+
+            // 🔥 domain restriction
+            const allowedDomain = 'dbllp.co.in';
+
+            const domain = val.split('@')[1];
+
+            if (domain !== allowedDomain) {
+                return `Only ${allowedDomain} emails are allowed`;
+            }
+
+            return '';
+        }
+
+        function validatePassword(val) {
+            val = val.trim();
+
+            if (!val) return 'Password is required';
+
+            if (val.length < 6) return 'Password must be at least 6 characters';
+            if (val.length > 128) return 'Password must be less than 128 characters';
+
+            // 🔥 Strong password rules
+            if (!/[A-Z]/.test(val)) return 'Must contain at least one uppercase letter';
+            if (!/[a-z]/.test(val)) return 'Must contain at least one lowercase letter';
+            if (!/[0-9]/.test(val)) return 'Must contain at least one number';
+            if (!/[!@#$%^&*]/.test(val)) return 'Must contain at least one special character';
+            return '';
+        }
+
+        function showError(wrap, msgEl, msg) {
+            if (msg) {
+                wrap.classList.add('error');
+                msgEl.textContent = msg;
+                msgEl.classList.add('show');
+            } else {
+                wrap.classList.remove('error');
+                msgEl.classList.remove('show');
+            }
+        }
+
+        emailInput.addEventListener('input', () => {
+            if (emailTouched) showError(emailWrap, emailError, validateEmail(emailInput.value));
+        });
+        emailInput.addEventListener('blur', () => {
+            emailTouched = true;
+            showError(emailWrap, emailError, validateEmail(emailInput.value));
+        });
+
+        passwordInput.addEventListener('input', () => {
+            if (passwordTouched) showError(passwordWrap, passwordError, validatePassword(passwordInput.value));
+        });
+        passwordInput.addEventListener('blur', () => {
+            passwordTouched = true;
+            showError(passwordWrap, passwordError, validatePassword(passwordInput.value));
+        });
+
+        function togglePassword() {
+            const pw = passwordInput;
+            pw.type = pw.type === 'password' ? 'text' : 'password';
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            emailTouched = true;
+            passwordTouched = true;
+            const eErr = validateEmail(emailInput.value);
+            const pErr = validatePassword(passwordInput.value);
+            showError(emailWrap, emailError, eErr);
+            showError(passwordWrap, passwordError, pErr);
+            if (eErr || pErr) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="btn-loading"><span class="spinner"></span>Signing in...</span>';
+
+            setTimeout(() => {
+                localStorage.setItem('prowise_admin_logged_in', 'true');
+                window.location.href = '/admin.html';
+            }, 1200);
+        });
+    </script>
+</body>
+
+</html>
