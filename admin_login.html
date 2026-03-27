@@ -18,7 +18,7 @@
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            background: linear-gradient(135deg, #d4d5d5 0%, #d4dae0 50%, #dce6f6 100%);
+            background: linear-gradient(135deg, #f7f7f6ce 0%, #f0f2f4 50%, #e4e4ea 100%);
             /* For Background Color */
             padding: 20px 15px;
             position: relative;
@@ -180,7 +180,7 @@
         }
 
         .error-msg {
-            font-size: 0.8rem;
+            font-size: 0.9.2rem;
             color: #ef4444;
             margin: 2px 0 0 2px;
             font-weight: 500;
@@ -370,13 +370,11 @@
 
             // 🔥 domain restriction
             const allowedDomain = 'dbllp.co.in';
-
             const domain = val.split('@')[1];
 
             if (domain !== allowedDomain) {
-                return `Only ${allowedDomain} emails are allowed`;
+                return `Invalid Email!`;
             }
-
             return '';
         }
 
