@@ -4,10 +4,23 @@ const FORM_VISIBILITY_KEY = 'prowise_form_open';
 
 let currentView = 'dashboard';
 
-function getApps() {
+let appsData = [];
+
+async function getApps() {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    } catch {
+        const res = await fetch('http://localhost:3000/applications');
+        const data = await res.json();
+
+        appsData = data.map(app => ({
+            ...app,
+            status: app.status || 'new',
+            submittedAt: app.created_at || new Date().toISOString()
+        }));
+
+        return appsData;
+
+    } catch (err) {
+        console.error(err);
         return [];
     }
 }
@@ -120,13 +133,14 @@ function switchView(view) {
     render();
 }
 
-function render() {
+async function render() {
     const contentArea = document.getElementById('contentArea');
+    const apps = await getApps();
 
     if (currentView === 'dashboard') {
-        contentArea.innerHTML = renderDashboard();
+        contentArea.innerHTML = renderDashboard(apps);
     } else if (currentView === 'applications') {
-        contentArea.innerHTML = renderApplications();
+        contentArea.innerHTML = renderApplications(apps);
     } else if (currentView === 'settings') {
         contentArea.innerHTML = renderSettings();
     } else {
@@ -135,9 +149,7 @@ function render() {
         );
     }
 }
-
-function renderDashboard() {
-    const apps = getApps();
+function renderDashboard(apps) {
     const total = apps.length;
     const newCount = apps.filter((app) => app.status === 'new').length;
     const shortlistedCount = apps.filter((app) => app.status === 'shortlisted').length;
@@ -213,8 +225,7 @@ function renderDashboard() {
         </div>`;
 }
 
-function renderApplications() {
-    const apps = getApps();
+function renderApplications(apps) {
     const rows = apps.map((app) => `
         <tr data-name="${safeText(app.fullName, '').toLowerCase()}" data-email="${safeText(app.email, '').toLowerCase()}" data-pos="${safeText(app.position, '').toLowerCase()}" data-status="${app.status || 'new'}" data-dept="${app.department || ''}">
             <td><div class="candidate-cell"><div class="avatar">${initials(app.fullName)}</div><div><div class="name">${safeText(app.fullName)}</div><div class="email">${safeText(app.email)}</div></div></div></td>
@@ -350,7 +361,7 @@ function renderInfoItem(label, value) {
 }
 
 function openDetail(id) {
-    const application = getById(id);
+    const application = appsData.find(app => app.id == id);
     if (!application) {
         return;
     }
