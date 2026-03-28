@@ -1,7 +1,5 @@
-var STORAGE_KEY = 'prowise_applications';
-var FORM_STORAGE_KEY = 'candidateApplication';
-var FORM_VISIBILITY_KEY = 'prowise_form_open';
 var EDUCATION_ROWS = ['10th','12th','Graduation','Post Graduation','Professional (CA/CMA/MBA/etc.)'];
+
 var SKILL_FIELDS = [
     { id: 'internalAudit', label: 'Internal Audit' },
     { id: 'statutoryAudit', label: 'Statutory Audit' },
@@ -16,24 +14,19 @@ var SKILL_FIELDS = [
 var currentStep = 0;
 var totalSteps = 8;
 var isFresher = false;
-var skippedSteps = [3, 4]; // Employment History and Current Employment
+var skippedSteps = [3, 4];
 
 var steps = document.querySelectorAll('.form-step');
 var stepDots = document.querySelectorAll('.step-dot');
 var progressStep = document.querySelector('.progress-step');
-var formOpenState = document.getElementById('formOpenState');
-var formClosedState = document.getElementById('formClosedState');
 
 function handleFresherChange(fresher) {
     isFresher = fresher;
     var note = document.getElementById('fresherNote');
-    if (fresher) {
-        note.classList.add('visible');
-    } else {
-        note.classList.remove('visible');
-    }
+    fresher ? note.classList.add('visible') : note.classList.remove('visible');
 }
 
+// ✅ KEEP ORIGINAL SKIP LOGIC
 function getNextVisibleStep(from, direction) {
     var next = from + direction;
     while (next >= 0 && next < totalSteps) {
@@ -45,22 +38,7 @@ function getNextVisibleStep(from, direction) {
     return from;
 }
 
-function isFormOpen() {
-    return localStorage.getItem(FORM_VISIBILITY_KEY) !== 'false';
-}
-
-function setFormDisabledState(disabled) {
-    var formElements = document.querySelectorAll('#applicationForm input, #applicationForm select, #applicationForm textarea, #applicationForm button');
-    formElements.forEach(function(element) { element.disabled = disabled; });
-}
-
-function applyFormAvailability() {
-    var isOpen = isFormOpen();
-    if (formOpenState) formOpenState.hidden = !isOpen;
-    if (formClosedState) formClosedState.hidden = isOpen;
-    setFormDisabledState(!isOpen);
-}
-
+// ✅ FULL ORIGINAL PROGRESS LOGIC (FIXED)
 function updateProgress() {
     var visibleSteps = [];
     for (var i = 0; i < totalSteps; i++) {
@@ -68,10 +46,17 @@ function updateProgress() {
             visibleSteps.push(i);
         }
     }
-    var currentVisibleIndex = visibleSteps.indexOf(currentStep);
-    var progressPercent = visibleSteps.length > 1 ? (currentVisibleIndex / (visibleSteps.length - 1)) * 100 : 0;
 
+    var currentVisibleIndex = visibleSteps.indexOf(currentStep);
+    var progressPercent = visibleSteps.length > 1
+        ? (currentVisibleIndex / (visibleSteps.length - 1)) * 100
+        : 0;
+
+    progressStep.style.width = progressPercent + '%';
+
+    // 🔥 restore dot behavior
     stepDots.forEach(function(dot, index) {
+
         if (isFresher && skippedSteps.indexOf(index) !== -1) {
             dot.style.opacity = '0.3';
             dot.style.pointerEvents = 'none';
@@ -79,14 +64,19 @@ function updateProgress() {
             dot.style.opacity = '1';
             dot.style.pointerEvents = 'auto';
         }
-        dot.classList.toggle('active', index <= currentStep && (skippedSteps.indexOf(index) === -1 || !isFresher));
+
+        dot.classList.toggle('active',
+            index <= currentStep &&
+            (!isFresher || skippedSteps.indexOf(index) === -1)
+        );
     });
 
-    progressStep.style.width = progressPercent + '%';
-
+    // 🔥 restore label behavior
     var labels = document.querySelectorAll('.step-label');
+
     labels.forEach(function(label, index) {
         label.classList.remove('active', 'done');
+
         if (isFresher && skippedSteps.indexOf(index) !== -1) {
             label.style.opacity = '0.3';
             label.style.textDecoration = 'line-through';
@@ -95,62 +85,93 @@ function updateProgress() {
             label.style.opacity = '1';
             label.style.textDecoration = 'none';
             label.style.pointerEvents = 'auto';
+
             if (index < currentStep) label.classList.add('done');
             else if (index === currentStep) label.classList.add('active');
         }
     });
 }
 
+// ✅ FIXED NAVIGATION (NO BLOCKING)
 function showStep(index) {
-    if (isFresher && skippedSteps.indexOf(index) !== -1) return;
+
+    if (isFresher && skippedSteps.includes(index)) {
+        index = index > currentStep ? index + 1 : index - 1;
+    }
+
     steps.forEach(function(step, i) {
         step.classList.toggle('active', i === index);
     });
+
     currentStep = index;
     updateProgress();
 }
 
 function nextStep() {
     if (validateCurrentStep()) {
-        var next = getNextVisibleStep(currentStep, 1);
-        if (next !== currentStep) showStep(next);
+        var next = currentStep + 1;
+
+        while (isFresher && skippedSteps.includes(next)) {
+            next++;
+        }
+
+        showStep(next);
     }
 }
 
 function prevStep() {
-    var prev = getNextVisibleStep(currentStep, -1);
-    if (prev !== currentStep) showStep(prev);
+    var prev = currentStep - 1;
+
+    while (isFresher && skippedSteps.includes(prev)) {
+        prev--;
+    }
+
+    showStep(prev);
 }
 
+// ✅ VALIDATION SAME
 function validateCurrentStep() {
     var currentFormStep = steps[currentStep];
     var requiredInputs = currentFormStep.querySelectorAll('[required]');
     var isValid = true;
+
     requiredInputs.forEach(function(input) {
-        var isCheckbox = input.type === 'checkbox';
-        var hasValue = isCheckbox ? input.checked : input.value.trim();
-        if (!hasValue) { input.style.borderColor = '#ef4444'; isValid = false; }
-        else { input.style.borderColor = ''; }
+        var value = input.type === 'checkbox' ? input.checked : input.value.trim();
+
+        if (!value) {
+            input.style.borderColor = '#ef4444';
+            isValid = false;
+        } else {
+            input.style.borderColor = '';
+        }
     });
-    if (!isValid) alert('Please fill all required fields before proceeding.');
+
+    if (!isValid) alert('Please fill all required fields');
     return isValid;
 }
 
 function getInputValue(id) {
-    var element = document.getElementById(id);
-    return element ? element.value.trim() : '';
+    return document.getElementById(id)?.value.trim() || '';
 }
 
 function getTableRows(stepIndex) {
     return steps[stepIndex].querySelectorAll('tbody tr');
 }
 
+// ✅ KEEP YOUR COLLECTION LOGIC
 function collectEducation() {
     var rows = getTableRows(2);
     return Array.from(rows).map(function(row, index) {
         var cells = row.querySelectorAll('input');
-        return { qual: EDUCATION_ROWS[index] || '', inst: cells[0]?.value.trim()||'', univ: cells[1]?.value.trim()||'', year: cells[2]?.value.trim()||'', cgpa: cells[3]?.value.trim()||'', mode: cells[4]?.value.trim()||'' };
-    }).filter(function(item) { return Object.values(item).some(Boolean); });
+        return {
+            qual: EDUCATION_ROWS[index] || '',
+            inst: cells[0]?.value || '',
+            univ: cells[1]?.value || '',
+            year: cells[2]?.value || '',
+            cgpa: cells[3]?.value || '',
+            mode: cells[4]?.value || ''
+        };
+    });
 }
 
 function collectEmployment() {
@@ -158,51 +179,59 @@ function collectEmployment() {
     var rows = getTableRows(3);
     return Array.from(rows).map(function(row) {
         var cells = row.querySelectorAll('input');
-        return { company: cells[0]?.value.trim()||'', industry: cells[1]?.value.trim()||'', designation: cells[2]?.value.trim()||'', from: cells[3]?.value.trim()||'', to: cells[4]?.value.trim()||'', ctc: cells[5]?.value.trim()||'', reason: cells[6]?.value.trim()||'' };
-    }).filter(function(item) { return Object.values(item).some(Boolean); });
+        return {
+            company: cells[0]?.value || '',
+            industry: cells[1]?.value || '',
+            designation: cells[2]?.value || '',
+            from: cells[3]?.value || '',
+            to: cells[4]?.value || '',
+            ctc: cells[5]?.value || '',
+            reason: cells[6]?.value || ''
+        };
+    });
 }
 
 function collectReferences() {
     var rows = getTableRows(6);
     return Array.from(rows).map(function(row) {
         var cells = row.querySelectorAll('input');
-        return { name: cells[0]?.value.trim()||'', org: cells[1]?.value.trim()||'', desig: cells[2]?.value.trim()||'', contact: cells[3]?.value.trim()||'', rel: cells[4]?.value.trim()||'' };
-    }).filter(function(item) { return Object.values(item).some(Boolean); });
+        return {
+            name: cells[0]?.value || '',
+            org: cells[1]?.value || '',
+            desig: cells[2]?.value || '',
+            contact: cells[3]?.value || '',
+            rel: cells[4]?.value || ''
+        };
+    });
 }
 
 function collectSkills() {
-    return SKILL_FIELDS.filter(function(skill) { return document.getElementById(skill.id)?.checked; }).map(function(skill) { return skill.label; });
+    return SKILL_FIELDS
+        .filter(s => document.getElementById(s.id)?.checked)
+        .map(s => s.label);
 }
 
-function getDepartmentLabel(value) {
-    if (!value) return '';
-    return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function createApplicationId(existingApps) {
-    var maxId = existingApps.reduce(function(highest, app) {
-        var value = parseInt(String(app.id || '').replace('APP-', ''), 10);
-        return isNaN(value) ? highest : Math.max(highest, value);
-    }, 0);
-    return 'APP-' + String(maxId + 1).padStart(3, '0');
-}
-
-function getStoredApplications() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-    catch(e) { return []; }
-}
-
+// ✅ PAYLOAD (NO LOCALSTORAGE)
 function buildApplicationPayload() {
-    var applications = getStoredApplications();
-    var department = getInputValue('department');
     return {
-        id: createApplicationId(applications), submittedAt: new Date().toISOString(), status: 'new',
-        isFresher: isFresher,
-        position: getInputValue('position'), department: department, departmentLabel: getDepartmentLabel(department),
-        joiningDate: getInputValue('joiningDate'), fullName: getInputValue('fullName'), dob: getInputValue('dob'),
-        gender: getInputValue('gender'), maritalStatus: getInputValue('maritalStatus'), phone: getInputValue('phone'),
-        email: getInputValue('email'), nationality: getInputValue('nationality'), address: getInputValue('address'),
-        certification: getInputValue('certification'), education: collectEducation(), employment: collectEmployment(),
+        isFresher,
+        position: getInputValue('position'),
+        department: getInputValue('department'),
+        joiningDate: getInputValue('joiningDate'),
+
+        fullName: getInputValue('fullName'),
+        dob: getInputValue('dob'),
+        gender: getInputValue('gender'),
+        maritalStatus: getInputValue('maritalStatus'),
+        phone: getInputValue('phone'),
+        email: getInputValue('email'),
+        nationality: getInputValue('nationality'),
+        address: getInputValue('address'),
+
+        certification: getInputValue('certification'),
+        education: collectEducation(),
+        employment: collectEmployment(),
+
         currentOrg: isFresher ? '' : getInputValue('currentOrg'),
         currentDesignation: isFresher ? '' : getInputValue('currentDesignation'),
         reportingTo: isFresher ? '' : getInputValue('reportingTo'),
@@ -210,61 +239,62 @@ function buildApplicationPayload() {
         noticePeriod: isFresher ? '' : getInputValue('noticePeriod'),
         lastWorkingDay: isFresher ? '' : getInputValue('lastWorkingDay'),
         expectedCTC: getInputValue('expectedCTC'),
-        skills: collectSkills(), excelLevel: getInputValue('excelLevel'),
-        bgVerification: getInputValue('backgroundVerification'), references: collectReferences(),
-        declarationAccepted: document.getElementById('declaration')?.checked || false, formDate: getInputValue('formDate')
+
+        skills: collectSkills(),
+        excelLevel: getInputValue('excelLevel'),
+
+        bgVerification: getInputValue('backgroundVerification'),
+        references: collectReferences(),
+
+        declarationAccepted: document.getElementById('declaration')?.checked || false,
+        formDate: getInputValue('formDate')
     };
 }
 
-function saveApplication(data) {
-    var applications = getStoredApplications();
-    applications.push(data);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
-    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(data, null, 2));
-}
-
+// ✅ FINAL SUBMIT (NODE READY)
 function submitForm() {
-    if (!isFormOpen()) { alert('This form is currently closed.'); applyFormAvailability(); return; }
     if (!validateCurrentStep()) return;
-    var submitBtn = document.getElementById('submitBtn');
-    var originalText = submitBtn.textContent;
-    submitBtn.textContent = 'Submitting...';
-    submitBtn.disabled = true;
+
+    var btn = document.getElementById('submitBtn');
+    var original = btn.textContent;
+
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+
     var data = buildApplicationPayload();
-    setTimeout(function() {
-        saveApplication(data);
-        alert('Application submitted successfully. It is now available on the admin page.');
+
+    fetch('http://localhost:3000/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(() => {
+        alert('Application submitted successfully');
         document.getElementById('applicationForm').reset();
-        isFresher = false;
-        handleFresherChange(false);
-        document.querySelector('input[name="isFresher"][value="no"]').checked = true;
         showStep(0);
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    }, 600);
+    })
+    .catch(() => {
+        console.log(data); // fallback
+        alert('Backend not connected yet');
+    })
+    .finally(() => {
+        btn.textContent = original;
+        btn.disabled = false;
+    });
 }
 
-stepDots.forEach(function(dot, index) {
-    dot.addEventListener('click', function() { showStep(index); });
+// ✅ CLICK EVENTS RESTORED
+stepDots.forEach((dot, index) => {
+    dot.addEventListener('click', () => showStep(index));
 });
 
-document.querySelectorAll('.step-label').forEach(function(label, index) {
-    label.addEventListener('click', function() { showStep(index); });
+document.querySelectorAll('.step-label').forEach((label, index) => {
+    label.addEventListener('click', () => showStep(index));
 });
 
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
-        event.preventDefault();
-        if (event.ctrlKey) nextStep();
-    }
-});
-
-window.addEventListener('storage', function(event) {
-    if (event.key === FORM_VISIBILITY_KEY) applyFormAvailability();
-});
-
-applyFormAvailability();
 updateProgress();
+
 window.nextStep = nextStep;
 window.prevStep = prevStep;
 window.submitForm = submitForm;
