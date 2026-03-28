@@ -245,6 +245,7 @@ function renderApplications(apps) {
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem">
                 <div><h1 style="font-size:1.5rem;font-weight:700">Applications</h1><p style="font-size:0.85rem;color:var(--fg-muted)" id="appCount">${apps.length} total applications</p></div>
                 <button class="btn btn-outline btn-sm" onclick="exportCSV()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV</button>
+                <button class="btn btn-outline btn-sm" onclick="downloadPDF()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Export PDF</button>
             </div>
             <div class="filters-bar">
                 <div class="search-wrap">
@@ -331,31 +332,143 @@ function handleDelete(id) {
     }
 }
 
-function exportCSV() {
-    const apps = getApps();
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Position', 'Department', 'Status', 'Submitted'];
-    const rows = apps.map((app) => [
-        safeText(app.id, ''),
-        safeText(app.fullName, ''),
-        safeText(app.email, ''),
-        safeText(app.phone, ''),
-        safeText(app.position, ''),
-        safeText(app.department, ''),
-        safeText(app.status, ''),
-        fmtDate(app.submittedAt)
-    ]);
-    const csv = [headers, ...rows]
-        .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','))
-        .join('\n');
+async function exportCSV() {
+    try {
+        const res = await fetch('http://localhost:3000/applications');
+        const apps = await res.json();
 
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'prowise_applications.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
+        if (!apps.length) {
+            alert('No data to export');
+            return;
+        }
+
+        // 🎯 STATIC HEADERS (ORDERED)
+        const headers = [
+            'ID','Name','Email','Phone','Position','Department','Joining Date',
+            'DOB','Gender','Marital Status','Nationality','Address',
+
+            '10th Institute','10th Board','10th Year','10th Score','10th Mode',
+            '12th Institute','12th Board','12th Year','12th Score','12th Mode',
+
+            'Grad Institute','Grad University','Grad Year','Grad Score','Grad Mode',
+            'PG Institute','PG University','PG Year','PG Score','PG Mode',
+
+            'Company1','Designation1','CTC1','From1','To1','Reason1',
+            'Company2','Designation2','CTC2','From2','To2','Reason2',
+            'Company3','Designation3','CTC3','From3','To3','Reason3',
+
+            'Current Org','Current Designation','Reporting To','Current CTC',
+            'Notice Period','Last Working Day','Expected CTC',
+
+            'Internal Audit','Stat Audit','IFC','GST','TDS','Finalization','Budgeting','MIS','Excel',
+
+            'Ref1 Name','Ref1 Org','Ref1 Designation','Ref1 Contact','Ref1 Relation',
+            'Ref2 Name','Ref2 Org','Ref2 Designation','Ref2 Contact','Ref2 Relation',
+
+            'Declaration','Form Date'
+        ];
+
+        // 🎯 MAP DATA IN SAME ORDER
+        const rows = apps.map(app => [
+
+            app.id,
+            app.fullName,
+            app.email,
+            app.phone,
+            app.position,
+            app.department,
+            formatDate(app.joiningDate),
+
+            formatDate(app.dob),
+            app.gender,
+            app.maritalStatus,
+            app.nationality,
+            app.address,
+
+            app.tenth_institute, app.tenth_board, app.tenth_year, app.tenth_score, app.tenth_mode,
+            app.twelfth_institute, app.twelfth_board, app.twelfth_year, app.twelfth_score, app.twelfth_mode,
+
+            app.grad_institute, app.grad_university, app.grad_year, app.grad_score, app.grad_mode,
+            app.pg_institute, app.pg_university, app.pg_year, app.pg_score, app.pg_mode,
+
+            app.c1_name, app.c1_designation, app.c1_ctc, formatDate(app.c1_from), formatDate(app.c1_to), app.c1_reason,
+            app.c2_name, app.c2_designation, app.c2_ctc, formatDate(app.c2_from), formatDate(app.c2_to), app.c2_reason,
+            app.c3_name, app.c3_designation, app.c3_ctc, formatDate(app.c3_from), formatDate(app.c3_to), app.c3_reason,
+
+            app.currentOrg,
+            app.currentDesignation,
+            app.reportingTo,
+            app.currentCTC,
+            app.noticePeriod,
+            formatDate(app.lastWorkingDay),
+            app.expectedCTC,
+
+            app.internalAudit,
+            app.statutoryAudit,
+            app.ifcSox,
+            app.gst,
+            app.tds,
+            app.finalization,
+            app.budgeting,
+            app.mis,
+            app.excelLevel,
+
+            app.ref1_name, app.ref1_org, app.ref1_designation, app.ref1_contact, app.ref1_relation,
+            app.ref2_name, app.ref2_org, app.ref2_designation, app.ref2_contact, app.ref2_relation,
+
+            app.declaration,
+            formatDate(app.formDate)
+        ]);
+
+        // 🎯 CSV BUILD
+        const csv = [headers, ...rows]
+            .map(row =>
+                row.map(cell =>
+                    `"${String(cell ?? '').replace(/"/g, '""')}"`
+                ).join(',')
+            )
+            .join('\n');
+
+        // 🎯 DOWNLOAD
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const link = document.createElement('a');
+
+        link.href = URL.createObjectURL(blob);
+        link.download = 'candidate_full_data.csv';
+        link.click();
+
+        URL.revokeObjectURL(link.href);
+
+    } catch (err) {
+        console.error(err);
+        alert('Export failed');
+    }
+}
+function downloadPDF() {
+    const element = document.getElementById('pdfContent');
+
+    const opt = {
+        margin: 0.5,
+        filename: 'candidate_details.pdf',
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save();
 }
 
+// helper
+function formatDate(val) {
+    if (!val) return '';
+    return new Date(val).toLocaleDateString('en-IN');
+}
+
+// helper
+function formatDate(val) {
+    if (!val) return '';
+    return new Date(val).toLocaleDateString('en-IN');
+}
 function renderInfoItem(label, value) {
     return `<div class="info-item"><label>${label}</label><span>${safeText(value)}</span></div>`;
 }

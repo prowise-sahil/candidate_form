@@ -35,7 +35,7 @@ app.post('/submit', (req, res) => {
         isFresher: data.isFresher,
         position: data.position,
         department: data.department,
-        joiningDate: data.joiningDate,
+        joiningDate: formatDate(data.joiningDate),
 
         fullName: data.fullName,
         dob: formatDate(data.dob),

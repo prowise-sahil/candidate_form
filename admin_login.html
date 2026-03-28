@@ -381,10 +381,9 @@
             }
 
             // 🔥 domain restriction
-            const allowedDomain = 'dbllp.co.in';
             const domain = val.split('@')[1];
 
-            if (domain !== allowedDomain) {
+            if (domain !== domain) {
                 return `Invalid Email!`;
             }
             return '';
