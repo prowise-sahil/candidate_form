@@ -1,4 +1,4 @@
-var EDUCATION_ROWS = ['10th','12th','Graduation','Post Graduation','Professional (CA/CMA/MBA/etc.)'];
+var EDUCATION_ROWS = ['10th', '12th', 'Graduation', 'Post Graduation', 'Professional (CA/CMA/MBA/etc.)'];
 
 var SKILL_FIELDS = [
     { id: 'internalAudit', label: 'Internal Audit' },
@@ -55,7 +55,7 @@ function updateProgress() {
     progressStep.style.width = progressPercent + '%';
 
     // 🔥 restore dot behavior
-    stepDots.forEach(function(dot, index) {
+    stepDots.forEach(function (dot, index) {
 
         if (isFresher && skippedSteps.indexOf(index) !== -1) {
             dot.style.opacity = '0.3';
@@ -74,7 +74,7 @@ function updateProgress() {
     // 🔥 restore label behavior
     var labels = document.querySelectorAll('.step-label');
 
-    labels.forEach(function(label, index) {
+    labels.forEach(function (label, index) {
         label.classList.remove('active', 'done');
 
         if (isFresher && skippedSteps.indexOf(index) !== -1) {
@@ -99,7 +99,7 @@ function showStep(index) {
         index = index > currentStep ? index + 1 : index - 1;
     }
 
-    steps.forEach(function(step, i) {
+    steps.forEach(function (step, i) {
         step.classList.toggle('active', i === index);
     });
 
@@ -135,7 +135,7 @@ function validateCurrentStep() {
     var requiredInputs = currentFormStep.querySelectorAll('[required]');
     var isValid = true;
 
-    requiredInputs.forEach(function(input) {
+    requiredInputs.forEach(function (input) {
         var value = input.type === 'checkbox' ? input.checked : input.value.trim();
 
         if (!value) {
@@ -161,7 +161,7 @@ function getTableRows(stepIndex) {
 // ✅ KEEP YOUR COLLECTION LOGIC
 function collectEducation() {
     var rows = getTableRows(2);
-    return Array.from(rows).map(function(row, index) {
+    return Array.from(rows).map(function (row, index) {
         var cells = row.querySelectorAll('input');
         return {
             qual: EDUCATION_ROWS[index] || '',
@@ -177,7 +177,7 @@ function collectEducation() {
 function collectEmployment() {
     if (isFresher) return [];
     var rows = getTableRows(3);
-    return Array.from(rows).map(function(row) {
+    return Array.from(rows).map(function (row) {
         var cells = row.querySelectorAll('input');
         return {
             company: cells[0]?.value || '',
@@ -193,7 +193,7 @@ function collectEmployment() {
 
 function collectReferences() {
     var rows = getTableRows(6);
-    return Array.from(rows).map(function(row) {
+    return Array.from(rows).map(function (row) {
         var cells = row.querySelectorAll('input');
         return {
             name: cells[0]?.value || '',
@@ -268,20 +268,21 @@ function submitForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-    .then(res => res.json())
-    .then(() => {
-        alert('Application submitted successfully');
-        document.getElementById('applicationForm').reset();
-        showStep(0);
-    })
-    .catch(() => {
-        console.log(data); // fallback
-        alert('Backend not connected yet');
-    })
-    .finally(() => {
-        btn.textContent = original;
-        btn.disabled = false;
-    });
+        .then(res => res.json())
+        .then(() => {
+            // hide form
+            document.getElementById('applicationForm').style.display = 'none';
+            // show success page
+            document.getElementById('successPage').style.display = 'block';
+        })
+        .catch(() => {
+            console.log(data); // fallback
+            alert('Backend not connected yet');
+        })
+        .finally(() => {
+            btn.textContent = original;
+            btn.disabled = false;
+        });
 }
 
 // ✅ CLICK EVENTS RESTORED
@@ -292,6 +293,14 @@ stepDots.forEach((dot, index) => {
 document.querySelectorAll('.step-label').forEach((label, index) => {
     label.addEventListener('click', () => showStep(index));
 });
+
+function goHome() {
+    document.getElementById('applicationForm').style.display = 'block';
+    document.getElementById('successPage').style.display = 'none';
+
+    document.getElementById('applicationForm').reset();
+    showStep(0);
+}
 
 updateProgress();
 

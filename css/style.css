@@ -36,6 +36,10 @@ header {
     width: auto;
 }
 
+#successPage {
+    animation: fadeIn 0.5s ease;
+}
+
 /* Main Container */
 .main-container {
     max-width: 1000px;
