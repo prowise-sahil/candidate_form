@@ -1690,3 +1690,10 @@ input:checked + .slider:before {
         margin-top: 2rem;
     }
 }
+.btn {
+    white-space: nowrap;
+}
+
+.filters-bar {
+    flex-wrap: wrap;
+}
