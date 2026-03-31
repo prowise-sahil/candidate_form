@@ -59,12 +59,10 @@ function deleteApp(id) {
 }
 
 function updateStatus(id, status) {
-    const apps = getApps();
-    const application = apps.find((item) => item.id === id);
+    const application = appsData.find((item) => item.id == id);
 
     if (application) {
         application.status = status;
-        saveApps(apps);
     }
 }
 
