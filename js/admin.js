@@ -243,10 +243,18 @@ function renderApplications(apps) {
     return `
         <div class="animate-fade">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem">
-                <div><h1 style="font-size:1.5rem;font-weight:700">Applications</h1><p style="font-size:0.85rem;color:var(--fg-muted)" id="appCount">${apps.length} total applications</p></div>
-                <button class="btn btn-outline btn-sm" onclick="exportCSV()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV</button>
-                <button class="btn btn-outline btn-sm" onclick="downloadPDF()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Export PDF</button>
-            </div>
+
+    <div>
+        <h1 style="font-size:1.5rem;font-weight:700">Applications</h1>
+        <p style="font-size:0.85rem;color:var(--fg-muted)" id="appCount">${apps.length} total applications</p>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
+        
+    </div>
+
+</div>
             <div class="filters-bar">
                 <div class="search-wrap">
                     <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -344,28 +352,28 @@ async function exportCSV() {
 
         // 🎯 STATIC HEADERS (ORDERED)
         const headers = [
-            'ID','Name','Email','Phone','Position','Department','Joining Date',
-            'DOB','Gender','Marital Status','Nationality','Address',
+            'ID', 'Name', 'Email', 'Phone', 'Position', 'Department', 'Joining Date',
+            'DOB', 'Gender', 'Marital Status', 'Nationality', 'Address',
 
-            '10th Institute','10th Board','10th Year','10th Score','10th Mode',
-            '12th Institute','12th Board','12th Year','12th Score','12th Mode',
+            '10th Institute', '10th Board', '10th Year', '10th Score', '10th Mode',
+            '12th Institute', '12th Board', '12th Year', '12th Score', '12th Mode',
 
-            'Grad Institute','Grad University','Grad Year','Grad Score','Grad Mode',
-            'PG Institute','PG University','PG Year','PG Score','PG Mode',
+            'Grad Institute', 'Grad University', 'Grad Year', 'Grad Score', 'Grad Mode',
+            'PG Institute', 'PG University', 'PG Year', 'PG Score', 'PG Mode',
 
-            'Company1','Designation1','CTC1','From1','To1','Reason1',
-            'Company2','Designation2','CTC2','From2','To2','Reason2',
-            'Company3','Designation3','CTC3','From3','To3','Reason3',
+            'Company1', 'Designation1', 'CTC1', 'From1', 'To1', 'Reason1',
+            'Company2', 'Designation2', 'CTC2', 'From2', 'To2', 'Reason2',
+            'Company3', 'Designation3', 'CTC3', 'From3', 'To3', 'Reason3',
 
-            'Current Org','Current Designation','Reporting To','Current CTC',
-            'Notice Period','Last Working Day','Expected CTC',
+            'Current Org', 'Current Designation', 'Reporting To', 'Current CTC',
+            'Notice Period', 'Last Working Day', 'Expected CTC',
 
-            'Internal Audit','Stat Audit','IFC','GST','TDS','Finalization','Budgeting','MIS','Excel',
+            'Internal Audit', 'Stat Audit', 'IFC', 'GST', 'TDS', 'Finalization', 'Budgeting', 'MIS', 'Excel',
 
-            'Ref1 Name','Ref1 Org','Ref1 Designation','Ref1 Contact','Ref1 Relation',
-            'Ref2 Name','Ref2 Org','Ref2 Designation','Ref2 Contact','Ref2 Relation',
+            'Ref1 Name', 'Ref1 Org', 'Ref1 Designation', 'Ref1 Contact', 'Ref1 Relation',
+            'Ref2 Name', 'Ref2 Org', 'Ref2 Designation', 'Ref2 Contact', 'Ref2 Relation',
 
-            'Declaration','Form Date'
+            'Declaration', 'Form Date'
         ];
 
         // 🎯 MAP DATA IN SAME ORDER
@@ -447,12 +455,17 @@ async function exportCSV() {
 function downloadPDF() {
     const element = document.getElementById('pdfContent');
 
+    if (!element) {
+        alert('⚠️ Please open candidate (click 👁️ View) first');
+        return;
+    }
+
     const opt = {
-        margin: 0.5,
-        filename: 'candidate_details.pdf',
+        margin: 5,
+        filename: document.querySelector('.detail-header h2')?.innerText + '.pdf', // 'candidate_details.pdf',
         image: { type: 'jpeg', quality: 1 },
         html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(element).save();
@@ -502,6 +515,9 @@ function openDetail(id) {
                 <div class="meta">${safeText(application.position)} · ${formatDepartment(application.department)} · ${safeText(application.id)}</div>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
+                <button class="btn btn-outline btn-sm" onclick="downloadPDF()">
+        📄 PDF
+    </button>
                 <select class="status-select" onchange="changeStatus('${application.id}',this.value)">
                     <option value="new" ${application.status === 'new' ? 'selected' : ''}>New</option>
                     <option value="reviewed" ${application.status === 'reviewed' ? 'selected' : ''}>Reviewed</option>
@@ -511,7 +527,7 @@ function openDetail(id) {
                 <button class="btn-ghost" onclick="closeDetail()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
         </div>
-        <div class="detail-content">
+        <div class="detail-content" id="pdfContent" >
             <div class="detail-section"><h3>Contact Information</h3>
                 <div class="info-grid">
                     ${renderInfoItem('Email', application.email)}
