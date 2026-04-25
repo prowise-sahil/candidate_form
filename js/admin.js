@@ -1,72 +1,11 @@
-const STORAGE_KEY = 'prowise_applications';
-const LEGACY_STORAGE_KEY = 'candidateApplication';
-const FORM_VISIBILITY_KEY = 'prowise_form_open';
+const FORM_VISIBILITY_KEY = 'prowise_form_open';               // used to store whether the form is open/closed (in browser localStorage)
+const API_BASE = 'http://localhost:3000';                      //your backend API (Node.js server)
 
-let currentView = 'dashboard';
+let currentView = 'dashboard';                             //which page is active (dashboard, applications, admins, settings)
+let appsData = [];                                         //stores candidate applications
+let adminsData = [];                                       //stores admin users
 
-let appsData = [];
-
-async function getApps() {
-    try {
-        const res = await fetch('http://localhost:3000/applications');
-        const data = await res.json();
-
-        appsData = data.map(app => ({
-            ...app,
-            status: app.status || 'new',
-            submittedAt: app.created_at || new Date().toISOString()
-        }));
-
-        return appsData;
-
-    } catch (err) {
-        console.error(err);
-        return [];
-    }
-}
-
-function saveApps(apps) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
-}
-
-function migrateLegacyApplication() {
-    const apps = getApps();
-    if (apps.length > 0) {
-        return;
-    }
-
-    try {
-        const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || 'null');
-        if (legacy && typeof legacy === 'object') {
-            saveApps([{
-                id: legacy.id || 'APP-001',
-                submittedAt: legacy.submittedAt || new Date().toISOString(),
-                status: legacy.status || 'new',
-                ...legacy
-            }]);
-        }
-    } catch {
-        // Ignore malformed legacy data.
-    }
-}
-
-function getById(id) {
-    return getApps().find((app) => app.id === id);
-}
-
-function deleteApp(id) {
-    saveApps(getApps().filter((app) => app.id !== id));
-}
-
-function updateStatus(id, status) {
-    const application = appsData.find((item) => item.id == id);
-
-    if (application) {
-        application.status = status;
-    }
-}
-
-function initials(name) {
+function initials(name) {                                  //Converts "John Doe" → "JD"
     return (name || '')
         .split(' ')
         .filter(Boolean)
@@ -76,23 +15,18 @@ function initials(name) {
         .toUpperCase() || 'NA';
 }
 
-function safeText(value, fallback = 'N/A') {
+function safeText(value, fallback = 'N/A') {                //Prevents empty/null values → shows "N/A"
     return value ? String(value) : fallback;
 }
 
-function badgeHtml(status) {
-    const safeStatus = status || 'new';
-    return `<span class="badge badge-${safeStatus}">${safeStatus}</span>`;
-}
-
-function fmtDate(iso) {
+function fmtDate(iso) {                                  //Converts date into Indian format like:
     if (!iso) {
         return 'N/A';
     }
 
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) {
-        return iso;
+        return safeText(iso);
     }
 
     return date.toLocaleDateString('en-IN', {
@@ -102,56 +36,182 @@ function fmtDate(iso) {
     });
 }
 
-function formatDepartment(value) {
-    if (!value) {
-        return 'N/A';
+function formatDate(val) {                           //Converts "it" → "IT"
+    if (!val) {
+        return '';
     }
 
-    return value.toUpperCase();
+    const date = new Date(val);
+    return Number.isNaN(date.getTime()) ? String(val) : date.toLocaleDateString('en-IN');
+}
+
+function formatDepartment(value) {
+    return value ? String(value).toUpperCase() : 'N/A';
+}
+
+function badgeHtml(status) {                                 //Creates colored labels like:[new] [active] [rejected]
+    const safeStatus = (status || 'new').toLowerCase();
+    return `<span class="badge badge-${safeStatus}">${safeStatus}</span>`;
+}
+
+function adminStatusBadge(status) {                             //Creates colored labels like:[new] [active] [rejected]
+    const safeStatus = (status || 'active').toLowerCase();
+    return `<span class="badge badge-${safeStatus}">${safeStatus}</span>`;
+}
+
+let formOpenState = true;
+
+async function fetchFormStatus() {
+    try {
+        const data = await requestJson(`${API_BASE}/form-status`);
+        formOpenState = data.isOpen;
+    } catch {
+        formOpenState = true;
+    }
 }
 
 function isFormOpen() {
-    return localStorage.getItem(FORM_VISIBILITY_KEY) !== 'false';
+    return formOpenState;
+}    
+   
+async function toggleFormAvailability(isOpen) {
+    try {
+        await requestJson(`${API_BASE}/form-status`, {
+            method: 'POST',
+            body: JSON.stringify({ isOpen })
+        });
+
+        // ✅ ADD THIS LINE
+        await fetchFormStatus();
+        render();
+    } catch (err) {
+        alert('Failed to update form status');
+    }
 }
 
-function setFormAvailability(isOpen) {
-    localStorage.setItem(FORM_VISIBILITY_KEY, String(isOpen));
+async function requestJson(url, options = {}) {          //This is your main API function
+                                               // Calls backend (fetch),Converts response to JSON, Handles errors automatically
+ const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+    });
+
+    let payload = null;
+    try {
+        payload = await response.json();
+    } catch {
+        payload = null;
+    }
+
+    if (!response.ok) {
+        throw new Error(payload?.error || `Request failed with status ${response.status}`);
+    }
+
+    return payload;
 }
 
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('mainArea').classList.toggle('expanded');
+async function getApps() {                     //GET applications Stores data in appsData
+
+    try {
+        const data = await requestJson(`${API_BASE}/applications`);    
+        appsData = data.map((app) => ({
+            ...app,
+            status: app.status || 'new',
+            submittedAt: app.created_at || app.submittedAt || new Date().toISOString()
+        }));
+    } catch (error) {
+        console.error(error);
+        appsData = [];
+    }
+
+    return appsData;
 }
 
-function switchView(view) {
+async function getAdmins() {                 //stores data in adminsData
+    try {
+        adminsData = await requestJson(`${API_BASE}/admins`);
+    } catch (error) {
+        console.error(error);
+        adminsData = [];
+    }
+
+    return adminsData;
+}
+
+function toggleSidebar() {                              //Sidebar toggle
+    const sidebar = document.getElementById('sidebar');
+    const mainArea = document.getElementById('mainArea');
+
+    if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('open');
+        return;
+    }
+
+    sidebar.classList.toggle('collapsed');
+    mainArea.classList.toggle('expanded');
+}
+
+function switchView(view) {                            // Changes screen like:Dashboard,Applications,AdminsSettings
     currentView = view;
     document.querySelectorAll('.nav-item').forEach((element) => {
         element.classList.toggle('active', element.dataset.view === view);
     });
+
+    const sidebar = document.getElementById('sidebar');
+    if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+    }
+
     render();
 }
 
-async function render() {
-    const contentArea = document.getElementById('contentArea');
-    const apps = await getApps();
+async function render() {                                       //This controls what is shown on screen based on currentview
+    const contentArea = document.getElementById('contentArea'); 
+     await fetchFormStatus(); // ✅ VERY IMPORTANT
 
-    if (currentView === 'dashboard') {
-        contentArea.innerHTML = renderDashboard(apps);
-    } else if (currentView === 'applications') {
-        contentArea.innerHTML = renderApplications(apps);
-    } else if (currentView === 'settings') {
-        contentArea.innerHTML = renderSettings();
-    } else {
-        contentArea.innerHTML = renderPlaceholder(
-            currentView.charAt(0).toUpperCase() + currentView.slice(1)
-        );
+    if (currentView === 'dashboard' || currentView === 'applications') {    //dashboard → renderDashboard()
+        await getApps();       
     }
+
+    if (currentView === 'admins') {                                     //applications → renderApplications()
+        await getAdmins();
+    }
+
+    if (currentView === 'dashboard') {                               //admins → renderAdmins()
+        contentArea.innerHTML = renderDashboard(appsData);
+        return;
+    }
+
+    if (currentView === 'applications') {                      // settings → renderSettings()
+
+        contentArea.innerHTML = renderApplications(appsData);          
+        return;
+    }
+
+    if (currentView === 'admins') {
+        contentArea.innerHTML = renderAdmins(adminsData);
+        return;
+    }
+
+    if (currentView === 'settings') {
+        contentArea.innerHTML = renderSettings();
+        return;
+    }
+
+    contentArea.innerHTML = renderPlaceholder(
+        currentView.charAt(0).toUpperCase() + currentView.slice(1)
+        
+    );
+    
 }
-function renderDashboard(apps) {
-    const total = apps.length;
-    const newCount = apps.filter((app) => app.status === 'new').length;
-    const shortlistedCount = apps.filter((app) => app.status === 'shortlisted').length;
+
+function renderDashboard(apps) {            //shows total applications      
+    const total = apps.length;                                         //New / shortlisted / rejected counts
+    const newCount = apps.filter((app) => app.status === 'new').length; //Department stats (progress bars)
+                                                                        //Recent applications list
+    const shortlistedCount = apps.filter((app) => app.status === 'shortlisted').length; //Form ON/OFF toggle
     const rejectedCount = apps.filter((app) => app.status === 'rejected').length;
+    const reviewedCount = apps.filter((app) => app.status === 'reviewed').length;
     const formStatus = isFormOpen() ? 'Open' : 'Closed';
 
     const departments = ['audit', 'accounts', 'it', 'hr'];
@@ -198,24 +258,19 @@ function renderDashboard(apps) {
                             <div class="settings-title">Form Availability</div>
                             <p class="settings-help">Current public form status: <strong>${formStatus}</strong></p>
                         </div>
-                       <label class="switch">
-  <input type="checkbox"
-         ${isFormOpen() ? 'checked' : ''}
-         onchange="toggleFormAvailability(this.checked)">
-  <span class="slider"></span>
-</label>
-                    </div>
-                    <div class="settings-status ${isFormOpen() ? 'open' : 'closed'}">
-                        
+                        <label class="switch">
+                            <input type="checkbox" ${isFormOpen() ? 'checked' : ''} onchange="toggleFormAvailability(this.checked)">
+                            <span class="slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>
             <div class="stats-grid">
                 <div class="stat-card" onclick="switchView('applications')"><div class="stat-icon blue"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="stat-value">${total}</div><div class="stat-label">Total Applications</div></div></div>
                 <div class="stat-card" onclick="switchView('applications')"><div class="stat-icon cyan"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="stat-value">${newCount}</div><div class="stat-label">New</div></div></div>
-                <div class="stat-card"><div class="stat-icon green"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="stat-value">${shortlistedCount}</div><div class="stat-label">Shortlisted</div></div></div>
-                <div class="stat-card"><div class="stat-icon red"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="stat-value">${rejectedCount}</div><div class="stat-label">Rejected</div></div></div>
-            </div>
+                <div class="stat-card" onclick="switchView('applications')"><div class="stat-icon green"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="stat-value">${shortlistedCount}</div><div class="stat-label">Shortlisted</div></div></div>
+                <div class="stat-card" onclick="switchView('applications')"><div class="stat-icon red"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div><div class="stat-value">${rejectedCount}</div><div class="stat-label">Rejected</div></div></div>
+                </div>
             <div class="two-col-grid">
                 <div class="card"><div class="card-header"><h2>By Department</h2></div><div class="card-body">${deptBars}</div></div>
                 <div class="card"><div class="card-header"><h2>Recent Applications</h2></div><div class="card-body">${recentHtml || '<div class="empty-state">No applications submitted yet.</div>'}</div></div>
@@ -223,9 +278,9 @@ function renderDashboard(apps) {
         </div>`;
 }
 
-function renderApplications(apps) {
+function renderApplications(apps) {     //Displays:Candidate list,Filters (search, status, department),Export CSV button
     const rows = apps.map((app) => `
-        <tr data-name="${safeText(app.fullName, '').toLowerCase()}" data-email="${safeText(app.email, '').toLowerCase()}" data-pos="${safeText(app.position, '').toLowerCase()}" data-status="${app.status || 'new'}" data-dept="${app.department || ''}">
+        <tr data-name="${safeText(app.fullName, '').toLowerCase()}" data-email="${safeText(app.email, '').toLowerCase()}" data-pos="${safeText(app.position, '').toLowerCase()}" data-status="${(app.status || 'new').toLowerCase()}" data-dept="${(app.department || '').toLowerCase()}">
             <td><div class="candidate-cell"><div class="avatar">${initials(app.fullName)}</div><div><div class="name">${safeText(app.fullName)}</div><div class="email">${safeText(app.email)}</div></div></div></td>
             <td>${safeText(app.position)}</td>
             <td><span class="badge badge-dept">${safeText(app.department, 'n/a')}</span></td>
@@ -233,26 +288,23 @@ function renderApplications(apps) {
             <td>${badgeHtml(app.status)}</td>
             <td><div class="action-btns">
                 <button class="btn-ghost" title="View" onclick="openDetail('${app.id}')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button class="btn-ghost-danger" title="Delete" onclick="handleDelete('${app.id}')"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-            </div></td>
+                 <button class="btn-ghost-danger" title="Delete" onclick="handleAppDelete(${app.id}, '${safeText(app.fullName).replace(/'/g, "\\'")}')">
+                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                </div></td>
         </tr>`)
         .join('');
 
     return `
         <div class="animate-fade">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem">
-
-    <div>
-        <h1 style="font-size:1.5rem;font-weight:700">Applications</h1>
-        <p style="font-size:0.85rem;color:var(--fg-muted)" id="appCount">${apps.length} total applications</p>
-    </div>
-
-    <div style="display:flex;gap:10px;">
-        <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
-        
-    </div>
-
-</div>
+                <div>
+                    <h1 style="font-size:1.5rem;font-weight:700">Applications</h1>
+                    <p style="font-size:0.85rem;color:var(--fg-muted)" id="appCount">${apps.length} total applications</p>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
+                </div>
+            </div>
             <div class="filters-bar">
                 <div class="search-wrap">
                     <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -263,6 +315,91 @@ function renderApplications(apps) {
             </div>
             <div class="card" style="overflow:hidden"><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Candidate</th><th>Position</th><th>Department</th><th>Submitted</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody id="appTableBody">${rows || '<tr><td colspan="6" class="empty-state">No applications found.</td></tr>'}</tbody></table></div></div>
         </div>`;
+}
+
+function renderAdmins(admins) {     //Shows:Admin list,Role, phone, status,Add/Edit/Delete buttons
+    const activeCount = admins.filter((admin) => admin.status === 'active').length;
+    const roles = [...new Set(admins.map((admin) => safeText(admin.role, 'Admin')))].sort();
+    const rows = admins.map((admin) => `
+        <tr data-name="${safeText(admin.name, '').toLowerCase()}" data-email="${safeText(admin.email, '').toLowerCase()}" data-role="${safeText(admin.role, '').toLowerCase()}" data-status="${(admin.status || 'active').toLowerCase()}">
+            <td>
+                <div class="candidate-cell">
+                    <div class="avatar">${initials(admin.name)}</div>
+                    <div>
+                        <div class="name">${safeText(admin.name)}</div>
+                        <div class="email">${safeText(admin.email)}</div>
+                    </div>
+                </div>
+            </td>
+            <td>${safeText(admin.role)}</td>
+            <td>${safeText(admin.phone, 'Not added')}</td>
+            <td>${adminStatusBadge(admin.status)}</td>
+            <td>${fmtDate(admin.created_at)}</td>
+            <td>
+                <div class="action-btns">
+                    <button class="btn-ghost" title="Edit" onclick="openAdminModal(${admin.id})">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+                   
+                    <button class="btn-ghost-danger" title="Delete" onclick="handleAdminDelete(${admin.id}, '${safeText(admin.name).replace(/'/g, "\\'")}')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+
+    return `
+        <div class="animate-fade">
+            <div class="page-header">
+                <div>
+                    <h1 style="font-size:1.5rem;font-weight:700">Admins</h1>
+                    <p style="font-size:0.85rem;color:var(--fg-muted)" id="adminCount">${admins.length} total admins · ${activeCount} active</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAdminModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Admin
+                </button>
+            </div>
+            <div class="card admin-summary-card">
+                <div class="card-body admin-summary-grid">
+                    <div class="summary-chip"><span class="summary-label">Team Size</span><strong>${admins.length}</strong></div>
+                    <div class="summary-chip"><span class="summary-label">Active Admins</span><strong>${activeCount}</strong></div>
+                    <div class="summary-chip"><span class="summary-label">Inactive Admins</span><strong>${admins.length - activeCount}</strong></div>
+                </div>
+            </div>
+            <div class="filters-bar">
+                <div class="search-wrap">
+                    <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input class="form-input search-input" id="adminSearchInput" placeholder="Search by name, email, or role..." oninput="filterAdminTable()">
+                </div>
+                <select class="form-select" id="adminStatusFilter" style="width:150px" onchange="filterAdminTable()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <select class="form-select" id="adminRoleFilter" style="width:170px" onchange="filterAdminTable()">
+                    <option value="all">All Roles</option>
+                    ${roles.map((role) => `<option value="${role.toLowerCase()}">${role}</option>`).join('')}
+                </select>
+            </div>
+            <div class="card" style="overflow:hidden">
+                <div style="overflow-x:auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Admin</th>
+                                <th>Role</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th style="text-align:right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">${rows || '<tr><td colspan="6" class="empty-state">No admins available.</td></tr>'}</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function renderSettings() {
@@ -282,20 +419,17 @@ function renderSettings() {
                             <div class="settings-title">Candidate Form Visibility</div>
                             <p class="settings-help">${statusText}</p>
                         </div>
-                        <label class="toggle-switch" for="formVisibilityToggle">
-                            <input type="checkbox" id="formVisibilityToggle" ${formOpen ? 'checked' : ''} onchange="toggleFormAvailability(this.checked)">
-                            <span class="toggle-slider"></span>
+                        <label class="switch">
+                            <input type="checkbox" ${formOpen ? 'checked' : ''} onchange="toggleFormAvailability(this.checked)">
+                            <span class="slider"></span>
                         </label>
-                    </div>
-                    <div class="settings-status ${formOpen ? 'open' : 'closed'}">
-                        
                     </div>
                 </div>
             </div>
         </div>`;
 }
 
-function filterTable() {
+function filterTable() {                 // Filters by:Search,Status,Department
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const deptFilter = document.getElementById('deptFilter');
@@ -331,161 +465,129 @@ function filterTable() {
     }
 }
 
-function handleDelete(id) {
-    if (confirm('Delete this application?')) {
-        deleteApp(id);
-        render();
+function filterAdminTable() {                        //Filters by:Name/email,Role,Status
+    const searchInput = document.getElementById('adminSearchInput');
+    const statusFilter = document.getElementById('adminStatusFilter');
+    const roleFilter = document.getElementById('adminRoleFilter');
+
+    if (!searchInput || !statusFilter || !roleFilter) {
+        return;
+    }
+
+    const search = searchInput.value.toLowerCase();
+    const status = statusFilter.value;
+    const role = roleFilter.value;
+    let visibleRows = 0;
+
+    const rows = document.querySelectorAll('#adminTableBody tr[data-name]');
+    rows.forEach((row) => {
+        const matchesSearch =
+            row.dataset.name.includes(search) ||
+            row.dataset.email.includes(search) ||
+            row.dataset.role.includes(search);
+        const matchesStatus = status === 'all' || row.dataset.status === status;
+        const matchesRole = role === 'all' || row.dataset.role === role;
+        const isVisible = matchesSearch && matchesStatus && matchesRole;
+
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) {
+            visibleRows += 1;
+        }
+    });
+
+    const adminCount = document.getElementById('adminCount');
+    if (adminCount) {
+        adminCount.textContent = `${visibleRows} of ${rows.length} admins visible`;
     }
 }
 
-async function exportCSV() {
+async function exportCSV() {               //Very important feature:Fetches all applications,Converts to CSVDownloads file:
+
     try {
-        const res = await fetch('http://localhost:3000/applications');
-        const apps = await res.json();
+        const apps = await requestJson(`${API_BASE}/applications`);
 
         if (!apps.length) {
             alert('No data to export');
             return;
         }
 
-        // 🎯 STATIC HEADERS (ORDERED)
         const headers = [
             'ID', 'Name', 'Email', 'Phone', 'Position', 'Department', 'Joining Date',
             'DOB', 'Gender', 'Marital Status', 'Nationality', 'Address',
-
             '10th Institute', '10th Board', '10th Year', '10th Score', '10th Mode',
             '12th Institute', '12th Board', '12th Year', '12th Score', '12th Mode',
-
             'Grad Institute', 'Grad University', 'Grad Year', 'Grad Score', 'Grad Mode',
             'PG Institute', 'PG University', 'PG Year', 'PG Score', 'PG Mode',
-
             'Company1', 'Designation1', 'CTC1', 'From1', 'To1', 'Reason1',
             'Company2', 'Designation2', 'CTC2', 'From2', 'To2', 'Reason2',
             'Company3', 'Designation3', 'CTC3', 'From3', 'To3', 'Reason3',
-
             'Current Org', 'Current Designation', 'Reporting To', 'Current CTC',
             'Notice Period', 'Last Working Day', 'Expected CTC',
-
             'Internal Audit', 'Stat Audit', 'IFC', 'GST', 'TDS', 'Finalization', 'Budgeting', 'MIS', 'Excel',
-
             'Ref1 Name', 'Ref1 Org', 'Ref1 Designation', 'Ref1 Contact', 'Ref1 Relation',
             'Ref2 Name', 'Ref2 Org', 'Ref2 Designation', 'Ref2 Contact', 'Ref2 Relation',
-
             'Declaration', 'Form Date'
         ];
 
-        // 🎯 MAP DATA IN SAME ORDER
-        const rows = apps.map(app => [
-
-            app.id,
-            app.fullName,
-            app.email,
-            app.phone,
-            app.position,
-            app.department,
-            formatDate(app.joiningDate),
-
-            formatDate(app.dob),
-            app.gender,
-            app.maritalStatus,
-            app.nationality,
-            app.address,
-
+        const rows = apps.map((app) => [
+            app.id, app.fullName, app.email, app.phone, app.position, app.department, formatDate(app.joiningDate),
+            formatDate(app.dob), app.gender, app.maritalStatus, app.nationality, app.address,
             app.tenth_institute, app.tenth_board, app.tenth_year, app.tenth_score, app.tenth_mode,
             app.twelfth_institute, app.twelfth_board, app.twelfth_year, app.twelfth_score, app.twelfth_mode,
-
             app.grad_institute, app.grad_university, app.grad_year, app.grad_score, app.grad_mode,
             app.pg_institute, app.pg_university, app.pg_year, app.pg_score, app.pg_mode,
-
             app.c1_name, app.c1_designation, app.c1_ctc, formatDate(app.c1_from), formatDate(app.c1_to), app.c1_reason,
             app.c2_name, app.c2_designation, app.c2_ctc, formatDate(app.c2_from), formatDate(app.c2_to), app.c2_reason,
             app.c3_name, app.c3_designation, app.c3_ctc, formatDate(app.c3_from), formatDate(app.c3_to), app.c3_reason,
-
-            app.currentOrg,
-            app.currentDesignation,
-            app.reportingTo,
-            app.currentCTC,
-            app.noticePeriod,
-            formatDate(app.lastWorkingDay),
-            app.expectedCTC,
-
-            app.internalAudit,
-            app.statutoryAudit,
-            app.ifcSox,
-            app.gst,
-            app.tds,
-            app.finalization,
-            app.budgeting,
-            app.mis,
-            app.excelLevel,
-
+            app.currentOrg, app.currentDesignation, app.reportingTo, app.currentCTC, app.noticePeriod, formatDate(app.lastWorkingDay), app.expectedCTC,
+            app.internalAudit, app.statutoryAudit, app.ifcSox, app.gst, app.tds, app.finalization, app.budgeting, app.mis, app.excelLevel,
             app.ref1_name, app.ref1_org, app.ref1_designation, app.ref1_contact, app.ref1_relation,
             app.ref2_name, app.ref2_org, app.ref2_designation, app.ref2_contact, app.ref2_relation,
-
-            app.declaration,
-            formatDate(app.formDate)
+            app.declaration, formatDate(app.formDate)
         ]);
 
-        // 🎯 CSV BUILD
         const csv = [headers, ...rows]
-            .map(row =>
-                row.map(cell =>
-                    `"${String(cell ?? '').replace(/"/g, '""')}"`
-                ).join(',')
-            )
+            .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
             .join('\n');
 
-        // 🎯 DOWNLOAD
         const blob = new Blob([csv], { type: 'text/csv' });
         const link = document.createElement('a');
-
         link.href = URL.createObjectURL(blob);
         link.download = 'candidate_full_data.csv';
         link.click();
-
         URL.revokeObjectURL(link.href);
-
-    } catch (err) {
-        console.error(err);
-        alert('Export failed');
+    } catch (error) {
+        console.error(error);
+        alert(error.message || 'Export failed');
     }
 }
+
+function renderInfoItem(label, value) {
+    return `<div class="info-item"><label>${label}</label><span>${safeText(value)}</span></div>`;
+}
+
 function downloadPDF() {
     const element = document.getElementById('pdfContent');
 
     if (!element) {
-        alert('⚠️ Please open candidate (click 👁️ View) first');
+        alert('Please open a candidate profile first.');
         return;
     }
 
     const opt = {
         margin: 5,
-        filename: document.querySelector('.detail-header h2')?.innerText + '.pdf', // 'candidate_details.pdf',
+        filename: `${document.querySelector('.detail-header h2')?.innerText || 'candidate-details'}.pdf`,
         image: { type: 'jpeg', quality: 1 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(element).save();      //Converts profile into PDF
 }
 
-// helper
-function formatDate(val) {
-    if (!val) return '';
-    return new Date(val).toLocaleDateString('en-IN');
-}
+function openDetail(id) {              //includes:Contact infoEducationEmployment,Skills,References
 
-// helper
-function formatDate(val) {
-    if (!val) return '';
-    return new Date(val).toLocaleDateString('en-IN');
-}
-function renderInfoItem(label, value) {
-    return `<div class="info-item"><label>${label}</label><span>${safeText(value)}</span></div>`;
-}
-
-function openDetail(id) {
-    const application = appsData.find(app => app.id == id);
+    const application = appsData.find((app) => String(app.id) === String(id));
     if (!application) {
         return;
     }
@@ -513,10 +615,8 @@ function openDetail(id) {
                 <div class="meta">${safeText(application.position)} · ${formatDepartment(application.department)} · ${safeText(application.id)}</div>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
-                <button class="btn btn-outline btn-sm" onclick="downloadPDF()">
-        📄 PDF
-    </button>
-                <select class="status-select" onchange="changeStatus('${application.id}',this.value)">
+                <button class="btn btn-outline btn-sm" onclick="downloadPDF()">PDF</button>
+                <select class="status-select" onchange="changeStatus('${application.id}', this.value)">
                     <option value="new" ${application.status === 'new' ? 'selected' : ''}>New</option>
                     <option value="reviewed" ${application.status === 'reviewed' ? 'selected' : ''}>Reviewed</option>
                     <option value="shortlisted" ${application.status === 'shortlisted' ? 'selected' : ''}>Shortlisted</option>
@@ -525,7 +625,7 @@ function openDetail(id) {
                 <button class="btn-ghost" onclick="closeDetail()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
         </div>
-        <div class="detail-content" id="pdfContent" >
+        <div class="detail-content" id="pdfContent">
             <div class="detail-section"><h3>Contact Information</h3>
                 <div class="info-grid">
                     ${renderInfoItem('Email', application.email)}
@@ -590,31 +690,232 @@ function closeDetailOnOverlay(event) {
     }
 }
 
-function changeStatus(id, status) {
-    updateStatus(id, status);
-    render();
-    openDetail(id);
-}
+async function changeStatus(id, status) {
+    try {
+        // ✅ Call backend API
+        await fetch(`${API_BASE}/applications/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
 
-function toggleFormAvailability(isOpen) {
-    setFormAvailability(isOpen);
-    render();
+        // ✅ Update locally
+        const application = appsData.find(app => String(app.id) === String(id));
+        if (application) {
+            application.status = status;
+        }
+
+        // ✅ Refresh data + UI
+        await getApps();
+        render();
+
+    } catch (err) {
+        console.error(err);
+        alert("Error updating status");
+    }
 }
 
 function renderPlaceholder(title) {
     return `<div class="empty-state animate-fade" style="margin-top:4rem"><h2 style="font-size:1.25rem;font-weight:600;color:var(--fg);margin-bottom:0.5rem">${title}</h2><p>Coming soon.</p></div>`;
 }
 
-migrateLegacyApplication();
+function openAdminModal(adminId) {              //Opens form popup Used for: Create admin,Edit admin
+    const admin = adminsData.find((item) => item.id === adminId);
+    const overlay = document.getElementById('adminModalOverlay');
+    const title = admin ? 'Edit admin' : 'Create admin';
+    const description = admin ? 'Update profile details, role, status, or password.' : 'Add another admin account for the team.';
+
+    document.getElementById('adminModalPanel').innerHTML = `
+        <div class="modal-header">
+            <div>
+                <h2>${title}</h2>
+                <p>${description}</p>
+            </div>
+            <button class="btn-ghost" type="button" onclick="closeAdminModal()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <form class="modal-form" id="adminForm" onsubmit="submitAdminForm(event)">
+            <input type="hidden" name="id" value="${admin?.id || ''}">
+            <div class="form-grid modal-grid">
+                <div class="form-group">
+                    <label class="form-label" for="adminName">Full name</label>
+                    <input class="form-input" id="adminName" name="name" value="${admin?.name || ''}" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adminEmail">Email</label>
+                    <input class="form-input" id="adminEmail" type="email" name="email" value="${admin?.email || ''}" placeholder="Enter your email id" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adminPhone">Phone</label>
+                    <input class="form-input" id="adminPhone" name="phone" value="${admin?.phone || ''}" placeholder="+91 98765 43210">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adminRole">Role</label>
+                    <input class="form-input" id="adminRole" name="role" value="${admin?.role || 'Admin'}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adminStatus">Status</label>
+                    <select class="form-select" id="adminStatus" name="status">
+                        <option value="active" ${(admin?.status || 'active') === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="inactive" ${(admin?.status || 'active') === 'inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adminPassword">${admin ? 'New password' : 'Password'}</label>
+                    <input class="form-input" id="adminPassword" type="password" name="password" ${admin ? '' : 'required'} placeholder="${admin ? 'Leave blank to keep current password' : 'Set a strong password'}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <p class="modal-help">${admin ? 'Leave password blank if you only want to update the profile details.' : 'This password will be used on the admin login screen.'}</p>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" type="button" onclick="closeAdminModal()">Cancel</button>
+                    <button class="btn btn-primary" id="adminSubmitBtn" type="submit">${admin ? 'Save Changes' : 'Create Admin'}</button>
+                </div>
+            </div>
+        </form>
+    `;
+
+    overlay.classList.add('open');
+}
+
+function closeAdminModal() {
+    document.getElementById('adminModalOverlay').classList.remove('open');
+}
+
+function closeAdminModalOnOverlay(event) {
+    if (event.target === document.getElementById('adminModalOverlay')) {
+        closeAdminModal();
+    }
+}
+
+async function submitAdminForm(event) {      //POST → create PUT → update
+    event.preventDefault();              //Validations: Name required,Email required,Password required (only for new admin)
+    const form = event.target;
+    const submitBtn = document.getElementById('adminSubmitBtn');
+    const formData = new FormData(form);
+    const id = formData.get('id');
+    const payload = {
+        name: String(formData.get('name') || '').trim(),
+        email: String(formData.get('email') || '').trim(),
+        phone: String(formData.get('phone') || '').trim(),
+        role: String(formData.get('role') || '').trim(),
+        status: String(formData.get('status') || 'active').trim(),
+        password: String(formData.get('password') || '').trim()
+    };
+
+    if (!payload.name || !payload.email || !payload.role) {
+        alert('Name, email, and role are required.');
+        return;
+    }
+
+    if (!id && !payload.password) {
+        alert('Password is required for new admins.');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = id ? 'Saving...' : 'Creating...';
+
+    try {
+        await requestJson(`${API_BASE}/admins${id ? `/${id}` : ''}`, {
+            method: id ? 'PUT' : 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        closeAdminModal();         
+        await getAdmins();
+        currentView = 'admins';
+        render();
+    } catch (error) {
+        alert(error.message || 'Unable to save admin.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = id ? 'Save Changes' : 'Create Admin';
+    }
+}    
+
+async function handleAppDelete(id, name) {
+    console.log("Deleting Application ID:", id);
+
+    const confirmDelete = confirm(`Delete application of "${name}"?`);
+    if (!confirmDelete) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/applications/${id}`, {
+            method: 'DELETE'
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("Application deleted successfully");
+
+            // ✅ remove only from applications
+            appsData = appsData.filter(app => String(app.id) !== String(id));
+
+            render();
+        } else {
+            alert(data.error || "Delete failed");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server error");
+    }
+}
+  async function handleAdminDelete(id, name) {    //Flow: Confirm delete,Call DELETE API,Remove from adminsData,Re-render UI
+console.log("Deleting admin:", id);
+const confirmDelete = confirm(`Delete admin "${name}"?`);
+    if (!confirmDelete) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/admins/${id}`, {
+            method: 'DELETE'
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("Admin deleted successfully");
+
+            // ✅ Correct array
+            adminsData = adminsData.filter(admin => admin.id !== id);
+            // ✅ Re-render properly
+            render();
+
+        } else {
+            alert(data.error || "Delete failed");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server error");
+    }
+}
+
+
+window.addEventListener('keydown', (event) => { 
+    if (event.key === 'Escape') {               //ESC key support
+        closeDetail();                        //Close panels
+        closeAdminModal();
+    }
+});
+
 render();
 
 window.toggleSidebar = toggleSidebar;
 window.switchView = switchView;
 window.filterTable = filterTable;
-window.handleDelete = handleDelete;
+window.filterAdminTable = filterAdminTable;
 window.exportCSV = exportCSV;
 window.openDetail = openDetail;
 window.closeDetail = closeDetail;
 window.closeDetailOnOverlay = closeDetailOnOverlay;
 window.changeStatus = changeStatus;
 window.toggleFormAvailability = toggleFormAvailability;
+window.downloadPDF = downloadPDF;
+window.openAdminModal = openAdminModal;
+window.closeAdminModal = closeAdminModal;
+window.closeAdminModalOnOverlay = closeAdminModalOnOverlay;
+window.submitAdminForm = submitAdminForm;
+window.handleAdminDelete = handleAdminDelete;

@@ -260,7 +260,7 @@
         .footer {
             text-align: center;
             margin-top: 20px;
-            padding-top: 12;
+            padding-top: 12px;
             border-top: 1px solid #f1f5f9;
         }
 
@@ -379,13 +379,9 @@
             if (!emailRegex.test(val)) {
                 return 'Please enter a valid email address';
             }
+            // ✅ domain restriction
+           
 
-            // 🔥 domain restriction
-            const domain = val.split('@')[1];
-
-            if (domain !== domain) {
-                return `Invalid Email!`;
-            }
             return '';
         }
 
