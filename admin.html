@@ -41,8 +41,8 @@
                 <div class="sidebar-footer">
                 <div class="avatar">A</div>
                 <div>
-                    <p>Admin User</p>
-                    <small>admin@prowise.com</small>
+                    <p id="adminName">Admin User</p>
+                    <small id="adminEmail">admin@prowise.com</small>
                 </div>
             </div>
         </aside>
@@ -69,5 +69,19 @@
     </div>
 
     <script src="js/admin.js"></script>
+    <script>
+        async function checkAuth() {
+            const res = await fetch("http://localhost:3000/me", {
+                credentials:"include"
+            });
+            const data = await res.json();
+            console.log(data)
+            if(!data.user){
+                window.location.href = 'admin_login.html';
+            }
+            document.querySelector("#adminEmail").innerHTML=data.user.email
+        }
+        checkAuth();
+    </script>
 </body>
 </html>

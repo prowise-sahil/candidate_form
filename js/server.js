@@ -2,6 +2,8 @@ const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
 const path = require('path');
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 
@@ -29,12 +31,17 @@ function query(sql, values = []) {
     });
 }
 
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:5500",
+    credentials: true
+}));
+app.use(cookieParser())
 app.use(express.json());
 
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
+    port: 8000,
     password: 'root',
     database: 'candidate_form'
 });
@@ -243,9 +250,33 @@ app.delete('/admins/:id', (req, res) => {
 
 /* ================= LOGIN ================= */
 
+app.get("/me", async (req, res) => {
+    console.log("recived")
+    try {
+        const token = req.cookies.token;
+        if (!token) {
+            return res.status(401).json({ msg: "Unauthorized" });
+        }
+
+        const decoded = jwt.verify(token, 'shhhh');
+        if (!decoded) {
+            return res.status(401).json({ msg: "Unauthorized" });
+        }
+        res.status(200).json({ user: decoded })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ msg: "Internal Server Error" });
+    }
+})
+
 app.post('/admin-auth', async (req, res) => {
+    
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '').trim();
+
+    console.log("email: ", email)
+    console.log("password: ", password)
 
     if (!email || !password) {
         return res.status(400).json({ error: 'Email & password required' });
@@ -267,6 +298,14 @@ app.post('/admin-auth', async (req, res) => {
         if (admin.status !== 'active') {
             return res.status(403).json({ error: 'Account inactive' });
         }
+
+        const token = jwt.sign({ email }, 'shhhh');
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Lax"
+        });
 
         res.json({
             success: true,

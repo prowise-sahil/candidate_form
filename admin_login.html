@@ -380,7 +380,7 @@
                 return 'Please enter a valid email address';
             }
             // ✅ domain restriction
-           
+
 
             return '';
         }
@@ -433,7 +433,7 @@
             pw.type = pw.type === 'password' ? 'text' : 'password';
         }
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             emailTouched = true;
             passwordTouched = true;
@@ -446,10 +446,28 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="btn-loading"><span class="spinner"></span>Signing in...</span>';
 
-            setTimeout(() => {
-                localStorage.setItem('prowise_admin_logged_in', 'true');
-                window.location.href = '/admin.html';
-            }, 1200);
+            const res = await fetch("http://localhost:3000/admin-auth", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: "include",
+                body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
+            });
+            const data = await res.json();
+            console.log(data)
+            // setTimeout(() => {
+            //     localStorage.setItem('prowise_admin_logged_in', 'true');
+            //     window.location.href = '/admin.html';
+            // }, 1200);
+
+            if (data.success) {
+                window.location.href = 'admin.html';
+            }
+            if (data.error) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span class="btn-loading">${data.error}</span>`;
+            }
         });
     </script>
 </body>
