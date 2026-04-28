@@ -1842,4 +1842,52 @@ input:checked + .slider:before {
 .filters-bar {
     flex-wrap: wrap;
 }
+/* 🔥 FIX TABLE BREAKING */
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* prevents overflow */
+}
 
+.detail-table th,
+.detail-table td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 11px; /* prevents overlap */
+    padding: 6px;
+}
+
+/* 🔥 PREVENT ROW BREAK */
+.detail-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+/* 🔥 PREVENT SECTION BREAK */
+.detail-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+/* 🔥 BETTER GRID SPACING */
+.info-grid {
+    gap: 6px 12px;
+}
+
+/* 🔥 REMOVE EXTRA TOP GAP */
+.detail-section:first-child {
+    margin-top: 0 !important;
+}
+
+/* 🔥 CLEAN HEADING SPACING */
+.detail-section h3 {
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+
+/* 🔥 PREVENT SKILL TAG BREAK */
+.skill-tags,
+.skill-tag {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}

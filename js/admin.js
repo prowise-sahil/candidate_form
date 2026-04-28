@@ -1,9 +1,10 @@
 const FORM_VISIBILITY_KEY = 'prowise_form_open';               // used to store whether the form is open/closed (in browser localStorage)
-const API_BASE = 'http://localhost:3000';                      //your backend API (Node.js server)
+const API_BASE = window.location.port === '4000' ? window.location.origin : 'http://localhost:4000'; // backend API
 
 let currentView = 'dashboard';                             //which page is active (dashboard, applications, admins, settings)
 let appsData = [];                                         //stores candidate applications
 let adminsData = [];                                       //stores admin users
+let currentApplication = null;                            //stores currently displayed application for PDF download
 
 function initials(name) {                                  //Converts "John Doe" → "JD"
     return (name || '')
@@ -567,22 +568,263 @@ function renderInfoItem(label, value) {
 }
 
 function downloadPDF() {
-    const element = document.getElementById('pdfContent');
-
-    if (!element) {
+    if (!currentApplication) {
         alert('Please open a candidate profile first.');
         return;
     }
 
-    const opt = {
-        margin: 5,
-        filename: `${document.querySelector('.detail-header h2')?.innerText || 'candidate-details'}.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    const app = currentApplication;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-    html2pdf().set(opt).from(element).save();      //Converts profile into PDF
+    let y = 6;
+
+    // 🔶 FORMAT DATE
+    function formatDate(date) {
+        if (!date) return "-";
+        return new Date(date).toLocaleDateString("en-IN");
+    }
+
+    // 🔶 PAGE SPACE CHECK
+    function checkPageSpace(requiredHeight = 40, topSpacing = 15) {
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    if (y + requiredHeight > pageHeight - 10) {
+        doc.addPage();
+        y = topSpacing; // 🔥 CONTROL TOP SPACE HERE
+    }
+}
+
+    const primaryColor = [255, 153, 51];
+    const textColor = [0, 0, 0];
+
+    // 🔥 AUTO MAP EDUCATION (IMPORTANT FIX)
+    const education = [
+        {
+            qual: "10th",
+            inst: app.tenth_institute,
+            university: app.tenth_board,
+            year: app.tenth_year,
+            cgpa: app.tenth_score,
+            mode: app.tenth_mode
+        },
+        {
+            qual: "12th",
+            inst: app.twelfth_institute,
+            university: app.twelfth_board,
+            year: app.twelfth_year,
+            cgpa: app.twelfth_score,
+            mode: app.twelfth_mode
+        },
+        {
+            qual: "Graduation",
+            inst: app.grad_institute,
+            university: app.grad_university,
+            year: app.grad_year,
+            cgpa: app.grad_score,
+            mode: app.grad_mode
+        },
+        {
+            qual: "Post Graduation",
+            inst: app.pg_institute,
+            university: app.pg_university,
+            year: app.pg_year,
+            cgpa: app.pg_score,
+            mode: app.pg_mode
+        }
+    ];
+
+    // 🔷 LOGO
+    const img = new Image();
+    img.src = 'assets/logo_transparent.png';
+
+    img.onload = function () {
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const imgWidth = 50;
+        const imgHeight = 30;
+        const x = (pageWidth - imgWidth) / 2;
+
+        doc.addImage(img, 'PNG', x, y, imgWidth, imgHeight);
+        y += 30;
+
+        // 🔷 TITLE
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.setTextColor(...primaryColor);
+        doc.text("Candidate Application", 14, y);
+        y += 8;
+
+        // 🔷 PERSONAL INFO
+        checkPageSpace(50);
+        doc.setTextColor(...textColor);
+        doc.setFontSize(12);
+        doc.text("Personal Information", 14, y);
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Field", "Value"]],
+            headStyles: { fillColor: primaryColor },
+            styles: { fontStyle: 'bold' },
+            body: [
+                ["Full Name", app.fullName || "-"],
+                ["Email", app.email || "-"],
+                ["Phone", app.phone || "-"],
+                ["Gender", app.gender || "-"],
+                ["DOB", formatDate(app.dob)],
+                ["Marital Status", app.maritalStatus || "-"],
+                ["Nationality", app.nationality || "-"],
+                ["Address", app.address || "-"]
+            ]
+        });
+
+        y = doc.lastAutoTable.finalY + 12;
+
+        // 🔷 POSITION
+        checkPageSpace(40);
+        doc.text("Position Details", 14, y);
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Field", "Value"]],
+            headStyles: { fillColor: primaryColor },
+            body: [
+                ["Position", app.position || "-"],
+                ["Department", app.department || "-"],
+                ["Joining Date", formatDate(app.joiningDate)]
+            ]
+        });
+
+        y = doc.lastAutoTable.finalY + 12;
+
+        // 🔷 EDUCATION
+        checkPageSpace(60);
+        doc.text("Education", 14, y);
+
+        const educationData = education.map(edu => [
+            edu.qual,
+            edu.inst,
+            edu.university,
+            edu.year,
+            edu.cgpa,
+            edu.mode
+        ]);
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Qualification", "Institute", "University", "Year", "CGPA/%", "Mode"]],
+            headStyles: { fillColor: primaryColor },
+            styles: { fontSize: 10 },
+            body: educationData
+        });
+
+        y = doc.lastAutoTable.finalY + 12;
+
+        // 🔷 EMPLOYMENT
+        checkPageSpace(70,25);
+        doc.text("Employment History", 14, y);
+
+        const employmentData = [
+            [app.c1_name, app.c1_designation, app.c1_ctc, formatDate(app.c1_from), formatDate(app.c1_to), app.c1_reason],
+            [app.c2_name, app.c2_designation, app.c2_ctc, formatDate(app.c2_from), formatDate(app.c2_to), app.c2_reason],
+            [app.c3_name, app.c3_designation, app.c3_ctc, formatDate(app.c3_from), formatDate(app.c3_to), app.c3_reason]
+        ];
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Company", "Designation", "CTC", "From", "To", "Reason"]],
+            headStyles: { fillColor: primaryColor },
+            styles: { fontSize: 10 },
+            body: employmentData
+        });
+
+        y = doc.lastAutoTable.finalY + 12;
+
+        // 🔷 CURRENT JOB
+        checkPageSpace(50);
+        doc.text("Current Employment", 14, y);
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Field", "Value"]],
+            headStyles: { fillColor: primaryColor },
+            body: [
+                ["Organization", app.currentOrg || "-"],
+                ["Designation", app.currentDesignation || "-"],
+                ["CTC", app.currentCTC || "-"],
+                ["Notice Period", app.noticePeriod || "-"],
+                ["Expected CTC", app.expectedCTC || "-"]
+            ]
+        });
+
+        y = doc.lastAutoTable.finalY + 12;
+
+        // 🔷 SKILLS
+        checkPageSpace(40);
+        doc.text("Skills & Proficiency", 14, y);
+
+        const skills = [
+            app.internalAudit && "Internal Audit",
+            app.statutoryAudit && "Statutory Audit",
+            app.gst && "GST",
+            app.tds && "TDS",
+            app.finalization && "Finalization",
+            app.budgeting && "Budgeting",
+            app.mis && "MIS"
+        ].filter(Boolean).join(", ");
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Field", "Value"]],
+            headStyles: { fillColor: primaryColor },
+            body: [
+                ["Skills", skills || "-"],
+                ["Excel Level", app.excelLevel || "-"]
+            ]
+        });
+
+        y = doc.lastAutoTable.finalY + 12;
+
+        // 🔷 REFERENCES
+        checkPageSpace(50);
+        doc.text("References", 14, y);
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Name", "Organization", "Designation", "Contact"]],
+            headStyles: { fillColor: primaryColor },
+            body: [
+                [app.ref1_name, app.ref1_org, app.ref1_designation, app.ref1_contact],
+                [app.ref2_name, app.ref2_org, app.ref2_designation, app.ref2_contact]
+            ]
+        });
+
+        y = doc.lastAutoTable.finalY + 12;
+
+        // 🔷 DECLARATION
+        checkPageSpace(40);
+        doc.text("Declaration", 14, y);
+
+        doc.autoTable({
+            startY: y + 2,
+            theme: 'grid',
+            head: [["Field", "Value"]],
+            headStyles: { fillColor: primaryColor },
+            body: [
+                ["Accepted", app.declaration ? "Yes" : "No"],
+                ["Form Date", formatDate(app.formDate)]
+            ]
+        });
+
+        doc.save(`${app.fullName || "candidate"}.pdf`);
+    };
 }
 
 function openDetail(id) {              //includes:Contact infoEducationEmployment,Skills,References
@@ -591,6 +833,8 @@ function openDetail(id) {              //includes:Contact infoEducationEmploymen
     if (!application) {
         return;
     }
+
+    currentApplication = application;   // Store for PDF download
 
     const educationRows = (application.education || [])
         .map((item) => `<tr><td>${safeText(item.qual)}</td><td>${safeText(item.inst)}</td><td>${safeText(item.univ)}</td><td>${safeText(item.year)}</td><td>${safeText(item.cgpa)}</td><td>${safeText(item.mode)}</td></tr>`)
@@ -625,7 +869,7 @@ function openDetail(id) {              //includes:Contact infoEducationEmploymen
                 <button class="btn-ghost" onclick="closeDetail()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
         </div>
-        <div class="detail-content" id="pdfContent">
+        <div class="detail-content">
             <div class="detail-section"><h3>Contact Information</h3>
                 <div class="info-grid">
                     ${renderInfoItem('Email', application.email)}
@@ -662,7 +906,7 @@ function openDetail(id) {              //includes:Contact infoEducationEmploymen
             <div class="detail-section"><h3>Employment History</h3>
                 <div style="overflow-x:auto"><table class="detail-table"><thead><tr><th>Company</th><th>Industry</th><th>Designation</th><th>From</th><th>To</th><th>CTC</th><th>Reason</th></tr></thead><tbody>${employmentRows}</tbody></table></div>
             </div>
-            <div class="detail-section"><h3>Skills & Exposure</h3>
+            <div class="detail-section pdf-keep-together"><h3>Skills & Exposure</h3>
                 <div class="skill-tags">${skillTags || '<span style="color:var(--fg-subtle)">No skills listed</span>'}</div>
                 <div class="info-item" style="margin-top:0.75rem"><label>Excel Proficiency</label><span>${safeText(application.excelLevel)}</span></div>
             </div>

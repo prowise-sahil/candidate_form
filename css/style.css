@@ -196,6 +196,12 @@ label {
     font-size: 0.95rem;
 }
 
+.required {
+    color: #ef4444;
+    font-weight: 600;
+    margin-left: 2px;
+}
+
 input,
 select,
 textarea {

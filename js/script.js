@@ -1,3 +1,4 @@
+var API_BASE = window.location.port === '4000' ? window.location.origin : 'http://localhost:4000';
 var EDUCATION_ROWS = ['10th', '12th', 'Graduation', 'Post Graduation', 'Professional (CA/CMA/MBA/etc.)'];
 
 var SKILL_FIELDS = [
@@ -130,8 +131,8 @@ function prevStep() {
 }
 
 // ✅ VALIDATION SAME
-function validateCurrentStep() {
-    var currentFormStep = steps[currentStep];
+function validateStep(stepIndex) {
+    var currentFormStep = steps[stepIndex];
     var requiredInputs = currentFormStep.querySelectorAll('[required]');
     var isValid = true;
 
@@ -146,8 +147,44 @@ function validateCurrentStep() {
         }
     });
 
+    if (stepIndex === 5) {
+        var hasSkill = SKILL_FIELDS.some(function (skill) {
+            return document.getElementById(skill.id)?.checked;
+        });
+        var skillGroup = currentFormStep.querySelector('.checkbox-group');
+
+        if (!hasSkill) {
+            if (skillGroup) skillGroup.style.outline = '2px solid #ef4444';
+            isValid = false;
+        } else if (skillGroup) {
+            skillGroup.style.outline = '';
+        }
+    }
+
+    return isValid;
+}
+
+function validateCurrentStep() {
+    var isValid = validateStep(currentStep);
+
     if (!isValid) alert('Please fill all required fields');
     return isValid;
+}
+
+function validateAllRequiredSteps() {
+    for (var index = 0; index < totalSteps; index++) {
+        if (isFresher && skippedSteps.includes(index)) {
+            continue;
+        }
+
+        if (!validateStep(index)) {
+            showStep(index);
+            alert('Please fill all required fields');
+            return false;
+        }
+    }
+
+    return true;
 }
 
 function getInputValue(id) {
@@ -176,16 +213,17 @@ function collectEducation() {
 
 function collectEmployment() {
     if (isFresher) return [];
-    var rows = getTableRows(3);
-    return Array.from(rows).map(function (row) {
-        var cells = row.querySelectorAll('input');
+
+    var sections = steps[3].querySelectorAll('.form-section');
+    return Array.from(sections).map(function (section) {
+        var cells = section.querySelectorAll('input');
         return {
             company: cells[0]?.value || '',
             industry: cells[1]?.value || '',
             designation: cells[2]?.value || '',
-            from: cells[3]?.value || '',
-            to: cells[4]?.value || '',
-            ctc: cells[5]?.value || '',
+            ctc: cells[3]?.value || '',
+            from: cells[4]?.value || '',
+            to: cells[5]?.value || '',
             reason: cells[6]?.value || ''
         };
     });
@@ -253,7 +291,7 @@ function buildApplicationPayload() {
 
 // ✅ FINAL SUBMIT (NODE READY)
 function submitForm() {
-    if (!validateCurrentStep()) return;
+    if (!validateAllRequiredSteps()) return;
 
     var btn = document.getElementById('submitBtn');
     var original = btn.textContent;
@@ -263,21 +301,27 @@ function submitForm() {
 
     var data = buildApplicationPayload();
 
-    fetch('http://localhost:3000/submit', {
+    fetch(`${API_BASE}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-        .then(res => res.json())
+        .then(async (res) => {
+            const payload = await res.json().catch(() => null);
+            if (!res.ok) {
+                throw new Error(payload?.error || 'Submission failed');
+            }
+            return payload;
+        })
         .then(() => {
             // hide form
             document.getElementById('applicationForm').style.display = 'none';
             // show success page
             document.getElementById('successPage').style.display = 'block';
         })
-        .catch(() => {
+        .catch((error) => {
             console.log(data); // fallback
-            alert('Backend not connected yet');
+            alert(error.message || 'Backend not connected yet');
         })
         .finally(() => {
             btn.textContent = original;
@@ -285,21 +329,25 @@ function submitForm() {
         });
 }
 
-// ✅ CLICK EVENTS RESTORED
+// ✅ CLICK EVENTS RESTORED WITH VALIDATION
 stepDots.forEach((dot, index) => {
-    dot.addEventListener('click', () => showStep(index));
+    dot.addEventListener('click', () => {
+        if (validateCurrentStep()) {
+            showStep(index);
+        }
+    });
 });
 
 document.querySelectorAll('.step-label').forEach((label, index) => {
-    label.addEventListener('click', () => showStep(index));
+    label.addEventListener('click', () => {
+        if (validateCurrentStep()) {
+            showStep(index);
+        }
+    });
 });
 
 function goHome() {
-    document.getElementById('applicationForm').style.display = 'block';
-    document.getElementById('successPage').style.display = 'none';
-
-    document.getElementById('applicationForm').reset();
-    showStep(0);
+    window.location.reload();
 }
 
 updateProgress();
