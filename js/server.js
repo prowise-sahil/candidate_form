@@ -220,8 +220,9 @@ app.use(express.json());
 
 const db = mysql.createConnection({
     host: 'localhost',
+    port: 8000,
     user: 'root',
-    password: 'prowise@123',
+    password: 'root',
     database: 'candidate_form'
 });
 
@@ -442,7 +443,7 @@ app.get("/me", async (req, res) => {
 })
 
 app.post('/admin-auth', async (req, res) => {
-    
+
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '').trim();
 
@@ -492,6 +493,25 @@ app.post('/admin-auth', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.post('/logout', async (req, res) => {
+    try {
+        const token = req.cookies.token;
+        if (!token) {
+            return res.status(401).json({ msg: "Unauthorized" });
+        }
+
+        res.clearCookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Lax"
+        });
+        res.json({ success: true });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Internal server error"});
+    }
+})
 
 /* ================= SERVER ================= */
 

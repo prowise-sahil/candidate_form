@@ -446,7 +446,7 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="btn-loading"><span class="spinner"></span>Signing in...</span>';
 
-            const res = await fetch("http://localhost:3000/admin-auth", {
+            const res = await fetch("http://localhost:4000/admin-auth", {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -456,10 +456,6 @@
             });
             const data = await res.json();
             console.log(data)
-            // setTimeout(() => {
-            //     localStorage.setItem('prowise_admin_logged_in', 'true');
-            //     window.location.href = '/admin.html';
-            // }, 1200);
 
             if (data.success) {
                 window.location.href = 'admin.html';
