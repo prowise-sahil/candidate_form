@@ -17,7 +17,17 @@
                 <img src="assets/logo.png" alt="Prowise Advisory Logo">
             </div>
             <div>
-                <a href="admin.html">
+                <a href="admin.html" style="
+            display: inline-block;
+            padding: 10px 18px;
+            background-color: #2563eb;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+       " onmouseover="this.style.backgroundColor='#1e40af'" onmouseout="this.style.backgroundColor='#2563eb'">
                     Admin
                 </a>
             </div>
@@ -444,7 +454,8 @@
                             <input type="text" id="reportingTo" required>
                         </div>
                         <div class="form-group">
-                            <label for="currentCTC">Current CTC (Fixed + Variable) <span class="required">*</span></label>
+                            <label for="currentCTC">Current CTC (Fixed + Variable) <span
+                                    class="required">*</span></label>
                             <input type="text" id="currentCTC" required>
                         </div>
                         <div class="form-group">
@@ -518,7 +529,8 @@
                         <p style="margin-bottom: 1.5rem; color: #64748b;">Provide at least 2 professional references:
                         </p>
                         <div class="form-group">
-                            <label for="backgroundVerification">Willing for Background Verification? <span class="required">*</span></label>
+                            <label for="backgroundVerification">Willing for Background Verification? <span
+                                    class="required">*</span></label>
                             <select id="backgroundVerification" required>
                                 <option value="">Select</option>
                                 <option value="yes">Yes</option>
