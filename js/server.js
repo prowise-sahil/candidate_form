@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
@@ -221,9 +222,9 @@ app.use(express.json());
 const db = mysql.createConnection({
     host: 'localhost',
     port: 3306,
-    user: 'root',
-    password: 'Yadav@123',
-    database: 'candidate_form'
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME
 });
 
 async function ensureAdminsTable() {
