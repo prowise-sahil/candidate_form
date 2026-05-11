@@ -9,13 +9,15 @@ var SKILL_FIELDS = [
     { id: 'tds', label: 'TDS Compliances' },
     { id: 'finalization', label: 'Finalization of Accounts' },
     { id: 'budgeting', label: 'Budgeting' },
-    { id: 'mis', label: 'MIS Reporting' }
+    { id: 'mis', label: 'MIS Reporting' },
+    { id: 'fresher', label: 'Fresher' }
 ];
 
 var currentStep = 0;
 var totalSteps = 8;
 var isFresher = false;
 var skippedSteps = [3, 4];
+var submittedApplicationData = null;
 
 var steps = document.querySelectorAll('.form-step');
 var stepDots = document.querySelectorAll('.step-dot');
@@ -195,6 +197,47 @@ function getTableRows(stepIndex) {
     return steps[stepIndex].querySelectorAll('tbody tr');
 }
 
+function getReferenceInputs() {
+    return document.querySelectorAll('#referenceFields input');
+}
+
+function handleBackgroundVerificationChange() {
+    var bgVerification = getInputValue('backgroundVerification');
+    var isRequired = bgVerification === 'yes';
+    var isDisabled = bgVerification === 'no';
+
+    getReferenceInputs().forEach(function (input) {
+        input.required = isRequired;
+        input.disabled = isDisabled;
+
+        if (isDisabled) {
+            input.value = '';
+            input.style.borderColor = '';
+        }
+    });
+
+    var referenceFields = document.getElementById('referenceFields');
+    if (referenceFields) {
+        referenceFields.classList.toggle('disabled-section', isDisabled);
+    }
+}
+
+function getTodayDateValue() {
+    var today = new Date();
+    var year = today.getFullYear();
+    var month = String(today.getMonth() + 1).padStart(2, '0');
+    var day = String(today.getDate()).padStart(2, '0');
+
+    return year + '-' + month + '-' + day;
+}
+
+function initializeReportDate() {
+    var formDate = document.getElementById('formDate');
+    if (!formDate) return;
+
+    formDate.value = getTodayDateValue();
+}
+
 // ✅ KEEP YOUR COLLECTION LOGIC
 function collectEducation() {
     var rows = getTableRows(2);
@@ -230,6 +273,8 @@ function collectEmployment() {
 }
 
 function collectReferences() {
+    if (getInputValue('backgroundVerification') === 'no') return [];
+
     var rows = getTableRows(6);
     return Array.from(rows).map(function (row) {
         var cells = row.querySelectorAll('input');
@@ -251,6 +296,8 @@ function collectSkills() {
 
 // ✅ PAYLOAD (NO LOCALSTORAGE)
 function buildApplicationPayload() {
+    initializeReportDate();
+
     return {
         isFresher,
         position: getInputValue('position'),
@@ -314,6 +361,7 @@ function submitForm() {
             return payload;
         })
         .then(() => {
+            submittedApplicationData = data;
             // hide form
             document.getElementById('applicationForm').style.display = 'none';
             // show success page
@@ -330,6 +378,125 @@ function submitForm() {
 }
 
 // ✅ CLICK EVENTS RESTORED WITH VALIDATION
+function formatPdfDate(date) {
+    if (!date) return '-';
+
+    return new Date(date).toLocaleDateString('en-IN');
+}
+
+function addPdfSection(doc, title, head, body) {
+    var pageHeight = doc.internal.pageSize.getHeight();
+    var startY = (doc.lastAutoTable?.finalY || 30) + 10;
+
+    if (startY > pageHeight - 45) {
+        doc.addPage();
+        startY = 20;
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 100, 0);
+    doc.text(title, 14, startY);
+
+    doc.autoTable({
+        startY: startY + 4,
+        theme: 'grid',
+        head: [head],
+        headStyles: { fillColor: [0, 100, 0] },
+        styles: { fontSize: 9, cellPadding: 2 },
+        body: body.length ? body : [head.map(function () { return '-'; })]
+    });
+}
+
+function downloadPDF() {
+    var data = submittedApplicationData || buildApplicationPayload();
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('PDF library is still loading. Please try again in a moment.');
+        return;
+    }
+
+    var doc = new window.jspdf.jsPDF();
+    if (!doc.autoTable) {
+        alert('PDF table library is still loading. Please try again in a moment.');
+        return;
+    }
+
+    var fileName = (data.fullName || 'candidate').replace(/[^\w\s-]/g, '').trim() || 'candidate';
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(0, 100, 0);
+    doc.text('Candidate Application Report', 14, 18);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Date of Report: ' + formatPdfDate(data.formDate), 14, 26);
+
+    addPdfSection(doc, 'Position Details', ['Field', 'Value'], [
+        ['Position Applied For', data.position || '-'],
+        ['Department', data.department || '-'],
+        ['Preferred Joining Date', formatPdfDate(data.joiningDate)]
+    ]);
+
+    addPdfSection(doc, 'Personal Information', ['Field', 'Value'], [
+        ['Full Name', data.fullName || '-'],
+        ['Date of Birth', formatPdfDate(data.dob)],
+        ['Gender', data.gender || '-'],
+        ['Marital Status', data.maritalStatus || '-'],
+        ['Phone', data.phone || '-'],
+        ['Email', data.email || '-'],
+        ['Nationality', data.nationality || '-'],
+        ['Address', data.address || '-']
+    ]);
+
+    addPdfSection(doc, 'Education', ['Qualification', 'Institute', 'University/Board', 'Year', 'CGPA/%', 'Mode'], data.education.map(function (item) {
+        return [item.qual || '-', item.inst || '-', item.univ || '-', item.year || '-', item.cgpa || '-', item.mode || '-'];
+    }));
+
+    addPdfSection(doc, 'Employment History', ['Company', 'Industry', 'Designation', 'CTC', 'From', 'To', 'Reason'], data.employment.map(function (item) {
+        return [
+            item.company || '-',
+            item.industry || '-',
+            item.designation || '-',
+            item.ctc || '-',
+            formatPdfDate(item.from),
+            formatPdfDate(item.to),
+            item.reason || '-'
+        ];
+    }));
+
+    addPdfSection(doc, 'Current Employment', ['Field', 'Value'], [
+        ['Current Organization', data.currentOrg || '-'],
+        ['Current Designation', data.currentDesignation || '-'],
+        ['Reporting To', data.reportingTo || '-'],
+        ['Current CTC', data.currentCTC || '-'],
+        ['Notice Period', data.noticePeriod || '-'],
+        ['Last Working Day', formatPdfDate(data.lastWorkingDay)],
+        ['Expected CTC', data.expectedCTC || '-']
+    ]);
+
+    addPdfSection(doc, 'Skills & Proficiency', ['Field', 'Value'], [
+        ['Skills', data.skills.length ? data.skills.join(', ') : '-'],
+        ['MS Excel Proficiency', data.excelLevel || '-']
+    ]);
+
+    addPdfSection(doc, 'Background & References', ['Name', 'Organization', 'Designation', 'Contact', 'Relationship'], data.references.length
+        ? data.references.map(function (item) {
+            return [item.name || '-', item.org || '-', item.desig || '-', item.contact || '-', item.rel || '-'];
+        })
+        : [['Background Verification', data.bgVerification || '-', '-', '-', '-']]
+    );
+
+    addPdfSection(doc, 'Declaration', ['Field', 'Value'], [
+        ['Declaration Accepted', data.declarationAccepted ? 'Yes' : 'No'],
+        ['Date of Report', formatPdfDate(data.formDate)]
+    ]);
+
+    doc.save(fileName + '.pdf');
+}
+
 stepDots.forEach((dot, index) => {
     dot.addEventListener('click', () => {
         if (validateCurrentStep()) {
@@ -351,8 +518,13 @@ function goHome() {
 }
 
 updateProgress();
+handleBackgroundVerificationChange();
+initializeReportDate();
 
 window.nextStep = nextStep;
 window.prevStep = prevStep;
 window.submitForm = submitForm;
+window.downloadPDF = downloadPDF;
+window.downloadPdf = downloadPDF;
 window.handleFresherChange = handleFresherChange;
+window.handleBackgroundVerificationChange = handleBackgroundVerificationChange;

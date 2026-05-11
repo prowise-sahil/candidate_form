@@ -595,7 +595,7 @@ function downloadPDF() {
     }
 }
 
-    const primaryColor = [255, 153, 51];
+    const primaryColor = [0, 100, 0];
     const textColor = [0, 0, 0];
 
     // 🔥 AUTO MAP EDUCATION (IMPORTANT FIX)
@@ -636,7 +636,7 @@ function downloadPDF() {
 
     // 🔷 LOGO
     const img = new Image();
-    img.src = 'assets/logo_transparent.png';
+    img.src = 'assets/white_bg_logo.jpg';
 
     img.onload = function () {
 
@@ -961,9 +961,9 @@ async function changeStatus(id, status) {
     }
 }
 
-function renderPlaceholder(title) {
-    return `<div class="empty-state animate-fade" style="margin-top:4rem"><h2 style="font-size:1.25rem;font-weight:600;color:var(--fg);margin-bottom:0.5rem">${title}</h2><p>Coming soon.</p></div>`;
-}
+// function renderPlaceholder(title) {
+//     return `<div class="empty-state animate-fade" style="margin-top:4rem"><h2 style="font-size:1.25rem;font-weight:600;color:var(--fg);margin-bottom:0.5rem">${title}</h2><p>Coming soon.</p></div>`;
+// }
 
 function openAdminModal(adminId) {              //Opens form popup Used for: Create admin,Edit admin
     const admin = adminsData.find((item) => item.id === adminId);

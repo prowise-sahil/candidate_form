@@ -678,6 +678,25 @@ a {
     color: var(--fg);
 }
 
+.candidate-form-link {
+    margin-left: auto;
+    background: #2f9e44;
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.55rem 0.95rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.candidate-form-link:hover {
+    background: #248232;
+    transform: translateY(-1px);
+}
+
 .main-content {
     flex: 1;
     padding: 1.5rem;

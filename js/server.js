@@ -220,9 +220,9 @@ app.use(express.json());
 
 const db = mysql.createConnection({
     host: 'localhost',
-    port: 8000,
+    port: 3306,
     user: 'root',
-    password: 'root',
+    password: 'Yadav@123',
     database: 'candidate_form'
 });
 
@@ -423,7 +423,6 @@ app.delete('/admins/:id', (req, res) => {
 /* ================= LOGIN ================= */
 
 app.get("/me", async (req, res) => {
-    console.log("recived")
     try {
         const token = req.cookies.token;
         if (!token) {

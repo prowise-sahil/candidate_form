@@ -7,7 +7,8 @@
     <title>Candidate Application Portal - Prowise Advisory</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 
 <body>
@@ -171,14 +172,13 @@
                     <div class="form-step">
                         <h2 class="step-title">Educational Qualifications</h2>
                         <div class="form-group">
-                            <label for="certification">Key Certification <span class="required">*</span></label>
-                            <select id="certification" required>
+                            <label for="certification">Key Certification</label>
+                            <select id="certification">
                                 <option value="">Select Certification</option>
                                 <option value="sap">SAP</option>
                                 <option value="tally">TALLY</option>
                                 <option value="data-analyst">Data Analyst</option>
                                 <option value="gst">GST</option>
-                                <option value="others">Others</option>
                             </select>
                         </div>
                         <!-- 10th Standard -->
@@ -506,6 +506,9 @@
                             <label class="checkbox-item">
                                 <input type="checkbox" id="mis"><span>MIS Reporting</span>
                             </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="fresher"><span>Fresher</span>
+                            </label>
                         </div><br>
 
                         <div class="form-group">
@@ -531,13 +534,13 @@
                         <div class="form-group">
                             <label for="backgroundVerification">Willing for Background Verification? <span
                                     class="required">*</span></label>
-                            <select id="backgroundVerification" required>
+                            <select id="backgroundVerification" required onchange="handleBackgroundVerificationChange()">
                                 <option value="">Select</option>
                                 <option value="yes">Yes</option>
                                 <option value="no">No</option>
                             </select>
                         </div>
-                        <div class="table-container">
+                        <div class="table-container" id="referenceFields">
                             <h3 class="emp-section-heading">Detail Section 1</h3>
                             <table>
                                 <thead>
@@ -606,8 +609,8 @@
                         <br>
 
                         <div class="form-group">
-                            <label for="formDate">Date <span class="required">*</span></label>
-                            <input type="date" id="formDate" required>
+                            <label for="formDate">Date of Report <span class="required">*</span></label>
+                            <input type="date" id="formDate" required disabled aria-readonly="true">
                         </div>
 
                         <div class="button-group">
@@ -626,6 +629,9 @@
             <button onclick="goHome()" style="margin-top:20px; padding:10px 20px;">
                 Fill Another Response
             </button>
+            <button onclick="downloadPdf()" style="margin-top:20px; padding:10px 20px;">
+                Download Your Responses
+            </button>
         </div>
 
         <div id="formClosedMessage" style="display:none; text-align:center; padding:50px;">
@@ -639,6 +645,7 @@
                 Policy</a></p>
     </footer>
     <script src="js/script.js"></script>
+    <script src="js/admin.js"></script>
     <script>
         async function checkFormAvailability() {
             try {
