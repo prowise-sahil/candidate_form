@@ -430,7 +430,7 @@ app.get("/me", async (req, res) => {
             return res.status(401).json({ msg: "Unauthorized" });
         }
 
-        const decoded = jwt.verify(token, 'shhhh');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
         if (!decoded) {
             return res.status(401).json({ msg: "Unauthorized" });
         }
@@ -468,7 +468,7 @@ app.post('/admin-auth', async (req, res) => {
             return res.status(403).json({ error: 'Account inactive' });
         }
 
-        const token = jwt.sign({ email }, 'shhhh');
+        const token = jwt.sign({ email }, process.env.JWT_SECRET_KEY);
 
         res.cookie("token", token, {
             httpOnly: true,
