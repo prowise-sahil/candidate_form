@@ -1,4 +1,4 @@
-var API_BASE = window.location.port === '4000' ? window.location.origin : 'http://localhost:4000';
+var API_BASE = window.location.port === window.APP_CONFIG.FRONTEND_PORT ? window.location.origin : window.APP_CONFIG.API_BASE_URL;
 var EDUCATION_ROWS = ['10th', '12th', 'Graduation', 'Post Graduation', 'Professional (CA/CMA/MBA/etc.)'];
 
 var SKILL_FIELDS = [

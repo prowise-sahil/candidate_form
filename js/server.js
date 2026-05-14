@@ -511,8 +511,8 @@ app.post('/logout', async (req, res) => {
 })
 
 /* ================= SERVER ================= */
-
-const server = app.listen(4000, () => {
+const PORT = process.env.FRONTEND_PORT
+const server = app.listen(PORT, () => {
     console.log('Server running on http://localhost:4000');
 });
 

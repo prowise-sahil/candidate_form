@@ -1,5 +1,5 @@
 const FORM_VISIBILITY_KEY = 'prowise_form_open';               // used to store whether the form is open/closed (in browser localStorage)
-const API_BASE = window.location.port === '4000' ? window.location.origin : 'http://localhost:4000'; // backend API
+const API_BASE = window.location.port === "4000" ? window.location.origin : process.env.FRONTEND_URL; // backend API
 
 let currentView = 'dashboard';                             //which page is active (dashboard, applications, admins, settings)
 let appsData = [];                                         //stores candidate applications

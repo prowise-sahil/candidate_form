@@ -116,7 +116,7 @@
     <script src="js/admin.js"></script>
     <script>
         async function checkAuth() {
-            const res = await fetch("http://localhost:4000/me", {
+            const res = await fetch("/me", {
                 credentials: "include"
             });
             const data = await res.json();
@@ -129,7 +129,7 @@
         checkAuth();
 
         async function logout() {
-            const res = await fetch("http://localhost:4000/logout", {
+            const res = await fetch("/logout", {
                 method: "POST",
                 credentials: "include"
             });
