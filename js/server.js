@@ -1,12 +1,25 @@
 require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2');
 const cors = require('cors');
 const path = require('path');
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const db = require('../config/db');
 
 const app = express();
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught exception:', error);
+
+    if (['ECONNRESET', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT'].includes(error.code)) {
+        console.log('Database connection error was caught; mysql2 pool will provide a fresh connection on the next query');
+        return;
+    }
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled promise rejection:', reason);
+});
 
 function formatDate(value) {
     return value && String(value).trim() !== '' ? value : null;
@@ -219,14 +232,6 @@ app.use(cors({
 app.use(cookieParser())
 app.use(express.json());
 
-const db = mysql.createConnection({
-    host: 'localhost',
-    port: 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME
-});
-
 async function ensureAdminsTable() {
     await query(`
         CREATE TABLE IF NOT EXISTS admins (
@@ -269,22 +274,17 @@ async function ensureApplicationColumns() {
     }
 }
 
-db.connect(async (err) => {
-    if (err) {
-        console.log('DB Error:', err);
-        return;
-    }
-
-    console.log('MySQL Connected');
-
+async function initializeDatabase() {
     try {
+        await db.testDbConnection();
         await ensureAdminsTable();
         await ensureApplicationColumns();
-        console.log('Admin table ready');
     } catch (err) {
-        console.log('Table setup error:', err);
+        console.error('Database startup error:', err);
     }
-});
+}
+
+initializeDatabase();
 
 app.use(express.static(path.join(__dirname, '../')));
 
@@ -447,9 +447,6 @@ app.post('/admin-auth', async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '').trim();
 
-    console.log("email: ", email)
-    console.log("password: ", password)
-
     if (!email || !password) {
         return res.status(400).json({ error: 'Email & password required' });
     }
@@ -515,6 +512,23 @@ app.post('/logout', async (req, res) => {
 
 /* ================= SERVER ================= */
 
-app.listen(4000, () => {
+const server = app.listen(4000, () => {
     console.log('Server running on http://localhost:4000');
 });
+
+async function shutdown(signal) {
+    console.log(`${signal} received. Closing HTTP server and MySQL pool...`);
+
+    server.close(async () => {
+        try {
+            await db.closePool();
+            process.exit(0);
+        } catch (error) {
+            console.error('Error during graceful shutdown:', error);
+            process.exit(1);
+        }
+    });
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
